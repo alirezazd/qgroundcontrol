@@ -795,13 +795,27 @@ bool ParameterManager::parameterExists(int componentId, const QString &paramName
     return ret;
 }
 
+bool ParameterManager::shouldIgnoreMissingParameter(int componentId, const QString &paramName) const
+{
+    componentId = _actualComponentId(componentId);
+
+    if (!_vehicle || !_vehicle->firmwarePlugin()) {
+        return false;
+    }
+
+    return _vehicle->firmwarePlugin()->shouldIgnoreMissingParameter(_vehicle, componentId,
+                                                                    _remapParamNameToVersion(paramName));
+}
+
 Fact *ParameterManager::getParameter(int componentId, const QString &paramName)
 {
     componentId = _actualComponentId(componentId);
 
     const QString mappedParamName = _remapParamNameToVersion(paramName);
     if (!_mapCompId2FactMap.contains(componentId) || !_mapCompId2FactMap[componentId].contains(mappedParamName)) {
-        qgcApp()->reportMissingParameter(componentId, mappedParamName);
+        if (!shouldIgnoreMissingParameter(componentId, mappedParamName)) {
+            qgcApp()->reportMissingParameter(componentId, mappedParamName);
+        }
         return &_defaultFact;
     }
 

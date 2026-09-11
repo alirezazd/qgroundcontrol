@@ -76,6 +76,7 @@ public:
     ///     @param componentId: Component id or ParameterManager::defaultComponentId
     ///     @param name: Parameter name
     bool parameterExists(int componentId, const QString &paramName) const;
+    bool shouldIgnoreMissingParameter(int componentId, const QString &paramName) const;
 
     /// Returns all parameter names
     QStringList parameterNames(int componentId) const;

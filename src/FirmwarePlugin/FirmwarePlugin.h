@@ -89,6 +89,12 @@ public:
         GuidedTakeoffCapability =   1 << 7, ///< Vehicle supports guided takeoff
     };
 
+    /// Whether a parameter this firmware does not implement should be reported to the user as
+    /// missing. Defaults to reporting, which is what every firmware that answers the full
+    /// parameter set wants.
+    virtual bool shouldIgnoreMissingParameter(const Vehicle * /*vehicle*/, int /*componentId*/,
+                                              const QString & /*name*/) const { return false; }
+
     /// Parameter name remapping support:
     /// When firmware renames a parameter across versions, callers should use the *newest* (current)
     /// parameter name. ParameterManager::_remapParamNameToVersion() walks the remap tables backwards

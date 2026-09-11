@@ -32,8 +32,17 @@ FactPanelController::~FactPanelController()
 
 void FactPanelController::_reportMissingParameter(int componentId, const QString &name) const
 {
+    if (!_vehicle) {
+        return;
+    }
+
     if (componentId == ParameterManager::defaultComponentId) {
         componentId = _vehicle->defaultComponentId();
+    }
+
+    // A firmware that does not implement the parameter at all is not a fault to report.
+    if (_vehicle->parameterManager()->shouldIgnoreMissingParameter(componentId, name)) {
+        return;
     }
 
     qgcApp()->reportMissingParameter(componentId, name);
