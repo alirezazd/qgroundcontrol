@@ -11,8 +11,6 @@ public:
 
     AutoPilotPlugin* autopilotPlugin(Vehicle* vehicle) const override;
     bool adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) override;
-    QString brandImageIndoor(const Vehicle* vehicle) const override;
-    QString brandImageOutdoor(const Vehicle* vehicle) const override;
     bool shouldIgnoreMissingParameter(const Vehicle* vehicle, int componentId, const QString& name) const override;
 
 protected:

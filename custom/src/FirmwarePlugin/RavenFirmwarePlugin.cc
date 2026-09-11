@@ -81,18 +81,6 @@ AutoPilotPlugin* RavenFirmwarePlugin::autopilotPlugin(Vehicle* vehicle) const
     return new RavenAutoPilotPlugin(vehicle, vehicle);
 }
 
-QString RavenFirmwarePlugin::brandImageIndoor(const Vehicle* vehicle) const
-{
-    Q_UNUSED(vehicle);
-    return QStringLiteral("/qmlimages/32Raven/BrandImage.png");
-}
-
-QString RavenFirmwarePlugin::brandImageOutdoor(const Vehicle* vehicle) const
-{
-    Q_UNUSED(vehicle);
-    return QStringLiteral("/qmlimages/32Raven/BrandImage.png");
-}
-
 bool RavenFirmwarePlugin::shouldIgnoreMissingParameter(const Vehicle* vehicle, int componentId, const QString& name) const
 {
     Q_UNUSED(vehicle);
