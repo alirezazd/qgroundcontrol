@@ -55,11 +55,13 @@ Item {
         VehicleSummaryRow {
             labelText: qsTr("Aux1")
             valueText: mapAux1Fact ? (mapAux1Fact.value === 0 ? qsTr("Disabled") : mapAux1Fact.valueString) : ""
+            visible:   !controller.vehicle.ravenFirmware
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Aux2")
             valueText: mapAux2Fact ? (mapAux2Fact.value === 0 ? qsTr("Disabled") : mapAux2Fact.valueString) : ""
+            visible:   !controller.vehicle.ravenFirmware
         }
     }
 }

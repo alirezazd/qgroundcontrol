@@ -10,6 +10,21 @@ import QGroundControl.VehicleSetup
 
 SetupPage {
     id: radioPage
+
+    // 32Raven has no RC_MAP_AUX1/AUX2, so offering them would map a switch onto a parameter the
+    // vehicle will never answer for.
+    readonly property var _switchMappingParams: {
+        const activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
+
+        if (!activeVehicle || !activeVehicle.px4Firmware) {
+            return 0
+        }
+
+        const aux = activeVehicle.ravenFirmware ? [] : [ "RC_MAP_AUX1", "RC_MAP_AUX2" ]
+        const flaps = activeVehicle.multiRotor ? [] : [ "RC_MAP_FLAPS" ]
+
+        return flaps.concat(aux, [ "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3", "RC_MAP_PAY_SW" ])
+    }
     pageComponent: pageComponent
 
     Component {
@@ -39,11 +54,7 @@ SetupPage {
                     Layout.fillWidth: true
 
                     Repeater {
-                        model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ?
-                                    (QGroundControl.multiVehicleManager.activeVehicle.multiRotor ?
-                                        [ "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3", "RC_MAP_PAY_SW"] :
-                                        [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3", "RC_MAP_PAY_SW"]) :
-                                    0
+                        model: radioPage._switchMappingParams
 
                         LabelledFactComboBox {
                             label: fact.shortDescription
