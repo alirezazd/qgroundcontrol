@@ -7,8 +7,8 @@
             "shortDesc": "Tailors the interface to a specific firmware for a simpler experience.",
             "longDesc": "When set to a specific firmware type, the interface is streamlined for that firmware.",
             "type": "uint32",
-            "enumStrings": "No preference,ArduPilot,PX4 Pro",
-            "enumValues": "0,3,12",
+            "enumStrings": "No preference,ArduPilot,PX4 Pro,32Raven",
+            "enumValues": "0,3,12,200",
             "default": 0,
             "label": "Preferred Firmware",
             "keywords": "firmware,ardupilot,px4"

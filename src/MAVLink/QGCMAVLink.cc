@@ -84,6 +84,7 @@ QList<QGCMAVLink::FirmwareClass_t> QGCMAVLink::allFirmwareClasses(void)
     static const QList<QGCMAVLink::FirmwareClass_t> classes = {
         FirmwareClassPX4,
         FirmwareClassArduPilot,
+        FirmwareClass32Raven,
         FirmwareClassGeneric
     };
 
@@ -106,7 +107,9 @@ QList<QGCMAVLink::VehicleClass_t> QGCMAVLink::allVehicleClasses(void)
 
 QGCMAVLink::FirmwareClass_t QGCMAVLink::firmwareClass(MAV_AUTOPILOT autopilot)
 {
-    if (isPX4FirmwareClass(autopilot)) {
+    if (is32RavenFirmwareClass(autopilot)) {
+        return FirmwareClass32Raven;
+    } else if (isPX4FirmwareClass(autopilot)) {
         return FirmwareClassPX4;
     } else if (isArduPilotFirmwareClass(autopilot)) {
         return FirmwareClassArduPilot;
@@ -122,6 +125,8 @@ QString QGCMAVLink::firmwareClassToString(FirmwareClass_t firmwareClass)
         return QCoreApplication::translate("Firmware Class", "PX4 Pro");
     case FirmwareClassArduPilot:
         return QCoreApplication::translate("Firmware Class", "ArduPilot");
+    case FirmwareClass32Raven:
+        return QCoreApplication::translate("Firmware Class", "32Raven");
     case FirmwareClassGeneric:
         return QCoreApplication::translate("Firmware Class", "Generic");
     default:
@@ -136,6 +141,8 @@ const char* QGCMAVLink::firmwareClassToCanonicalString(FirmwareClass_t firmwareC
         return "PX4 Pro";
     case FirmwareClassArduPilot:
         return "ArduPilot";
+    case FirmwareClass32Raven:
+        return "32Raven";
     case FirmwareClassGeneric:
         return "Generic";
     default:
@@ -151,6 +158,9 @@ MAV_AUTOPILOT QGCMAVLink::firmwareTypeFromString(const QString &firmwareTypeStr)
     }
     if (type == QLatin1String("PX4 Pro")) {
         return MAV_AUTOPILOT_PX4;
+    }
+    if (type == QLatin1String("32Raven")) {
+        return firmwareClassToAutopilot(FirmwareClass32Raven);
     }
     return MAV_AUTOPILOT_GENERIC;
 }

@@ -158,6 +158,7 @@ public:
     Q_PROPERTY(float                longitude                   READ longitude                                                      NOTIFY coordinateChanged)
     Q_PROPERTY(bool                 px4Firmware                 READ px4Firmware                                                    NOTIFY firmwareTypeChanged)
     Q_PROPERTY(bool                 apmFirmware                 READ apmFirmware                                                    NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(bool                 ravenFirmware               READ ravenFirmware                                                  NOTIFY firmwareTypeChanged)
     Q_PROPERTY(bool                 soloFirmware                READ soloFirmware               WRITE setSoloFirmware               NOTIFY soloFirmwareChanged)
     Q_PROPERTY(bool                 genericFirmware             READ genericFirmware                                                CONSTANT)
     Q_PROPERTY(uint                 messagesReceived            READ messagesReceived                                               NOTIFY messagesReceivedChanged)
@@ -495,7 +496,10 @@ public:
 
     float           latitude                    () { return static_cast<float>(_coordinate.latitude()); }
     float           longitude                   () { return static_cast<float>(_coordinate.longitude()); }
-    bool            px4Firmware                 () const { return _firmwareType == MAV_AUTOPILOT_PX4; }
+    // 32Raven speaks PX4's parameter naming and uses its setup flows, so everything gated on
+    // px4Firmware() applies to it. ravenFirmware() is what tells the two apart.
+    bool            px4Firmware                 () const { return (_firmwareType == MAV_AUTOPILOT_PX4) || ravenFirmware(); }
+    bool            ravenFirmware               () const { return QGCMAVLink::is32RavenFirmwareClass(_firmwareType); }
     bool            apmFirmware                 () const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
     bool            genericFirmware             () const { return !px4Firmware() && !apmFirmware(); }
     uint            messagesReceived            () const{ return _messagesReceived; }
