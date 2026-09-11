@@ -1,3 +1,26 @@
+> **32Raven QGroundControl fork**
+>
+> This repository is the QGroundControl integration branch for the
+> [32Raven flight controller](https://github.com/alirezazd/32raven). The
+> default branch is `32Raven`, rebased onto a single pinned upstream release
+> tag rather than tracking a branch, so the base is always a known build.
+>
+> **Base: `v5.1.4`** (QGroundControl V5.1 Stable, 2026-08-30).
+>
+> Everything 32Raven-specific lives in `custom/`. Three patches to upstream
+> files are unavoidable and are kept as separate commits so each can be
+> dropped when upstream absorbs it:
+>
+> 1. A `FirmwarePlugin` hook letting a firmware declare parameters it does not
+>    implement, so they are not reported as missing. Firmware-agnostic.
+> 2. Registration of 32Raven as a firmware class, pending a `MAV_AUTOPILOT`
+>    enumerator from the MAVLink project.
+> 3. Hiding `RC_MAP_AUX1`/`RC_MAP_AUX2` in radio setup, which 32Raven has no
+>    parameters for.
+>
+> Use this fork when building the 32Raven ground station app. Use upstream
+> QGroundControl for general PX4/ArduPilot releases.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/Dronecode/UX-Design/35d8148a8a0559cd4bcf50bfa2c94614983cce91/QGC/Branding/Deliverables/QGC_RGB_Logo_Horizontal_Positive_PREFERRED/QGC_RGB_Logo_Horizontal_Positive_PREFERRED.svg" alt="QGroundControl Logo" width="500">
 </p>

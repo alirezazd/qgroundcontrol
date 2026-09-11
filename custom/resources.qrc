@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="qmlimages/32Raven/BrandImage.png">resources/32Raven.png</file>
+    </qresource>
+</RCC>
