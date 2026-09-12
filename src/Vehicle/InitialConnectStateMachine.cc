@@ -397,6 +397,12 @@ void InitialConnectStateMachine::_requestCompInfo(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestCompInfo";
 
+    if (!vehicle()->firmwarePlugin()->supportsComponentInformation(vehicle())) {
+        qCDebug(InitialConnectStateMachineLog) << "Skipping component information: firmware does not serve it";
+        state->complete();
+        return;
+    }
+
     connect(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
             this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
 

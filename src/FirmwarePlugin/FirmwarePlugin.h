@@ -89,6 +89,12 @@ public:
         GuidedTakeoffCapability =   1 << 7, ///< Vehicle supports guided takeoff
     };
 
+    /// Whether this firmware serves COMPONENT_METADATA/COMPONENT_INFORMATION. Defaults to
+    /// asking, which costs one request against firmware that does not. A firmware whose
+    /// metadata is compiled into the ground station instead returns false, so the request,
+    /// its deprecated fallback and the warning when both fail are all skipped.
+    virtual bool supportsComponentInformation(const Vehicle * /*vehicle*/) const { return true; }
+
     /// Whether a parameter this firmware does not implement should be reported to the user as
     /// missing. Defaults to reporting, which is what every firmware that answers the full
     /// parameter set wants.

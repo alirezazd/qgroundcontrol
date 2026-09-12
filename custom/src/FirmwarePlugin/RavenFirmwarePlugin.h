@@ -13,6 +13,12 @@ public:
     bool adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) override;
     bool shouldIgnoreMissingParameter(const Vehicle* vehicle, int componentId, const QString& name) const override;
 
+    // 32Raven's metadata is the dictionary compiled in below, so the vehicle
+    // is never asked to describe itself. Without this the bridge refuses the
+    // request and its deprecated fallback on every connect, and the state
+    // machine reports the failure it was always going to get.
+    bool supportsComponentInformation(const Vehicle* /*vehicle*/) const override { return false; }
+
 protected:
     // Replaces PX4's dictionary rather than adding to it: CompInfoParam picks
     // one or the other, so anything absent here reaches the user as a bare
