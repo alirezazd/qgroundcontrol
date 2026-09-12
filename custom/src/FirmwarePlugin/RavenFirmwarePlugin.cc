@@ -18,8 +18,13 @@ namespace {
 constexpr int kMinimumSupportedRavenMajorVersion = 0;
 constexpr int kMinimumSupportedRavenMinorVersion = 0;
 constexpr int kMinimumSupportedRavenPatchVersion = 1;
-constexpr const char* kLatestRavenVersionBadgeUrl =
-    "https://raw.githubusercontent.com/alirezazd/32raven/badge-data/firmware-version-badge.json";
+// The releases API rather than the version badge: the badge follows master, so
+// it names the newest commit and would report every released build as out of
+// date the moment master moves. `releases/latest` is the newest published
+// release and excludes drafts and prereleases on its own, which is also why
+// nothing here has to recognise a marker word in the release title.
+constexpr const char* kLatestRavenReleaseUrl =
+    "https://api.github.com/repos/alirezazd/32raven/releases/latest";
 
 QString _versionString(int major, int minor, int patch)
 {
@@ -102,13 +107,23 @@ bool RavenFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink
 QString RavenFirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle) const
 {
     Q_UNUSED(vehicle);
-    return QString::fromLatin1(kLatestRavenVersionBadgeUrl);
+    return QString::fromLatin1(kLatestRavenReleaseUrl);
 }
 
 void RavenFirmwarePlugin::_versionFileDownloadFinished(const QString& remoteFile, const QString& localFile,
                                                        const Vehicle* vehicle) const
 {
     qCDebug(RavenFirmwarePluginLog) << "Download complete" << remoteFile << localFile;
+
+    // Only a build cut from a release tag reports OFFICIAL; every other one
+    // says DEV and has no published release to be behind. Checking anyway
+    // would tell the author their bench build is out of date against the
+    // release it is ahead of.
+    if (vehicle->firmwareVersionType() != FIRMWARE_VERSION_TYPE_OFFICIAL) {
+        qCDebug(RavenFirmwarePluginLog)
+            << "Skipping release check for a" << vehicle->firmwareVersionTypeString() << "build";
+        return;
+    }
 
     QFile versionFile(localFile);
     if (!versionFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -123,9 +138,9 @@ void RavenFirmwarePlugin::_versionFileDownloadFinished(const QString& remoteFile
     }
 
     const QString latestVersionString =
-        versionDocument.object().value(QStringLiteral("message")).toString().trimmed();
+        versionDocument.object().value(QStringLiteral("tag_name")).toString().trimmed();
     if (latestVersionString.isEmpty()) {
-        qCWarning(RavenFirmwarePluginLog) << "Latest version payload missing message field in" << remoteFile;
+        qCWarning(RavenFirmwarePluginLog) << "Latest release payload missing tag_name field in" << remoteFile;
         return;
     }
 
