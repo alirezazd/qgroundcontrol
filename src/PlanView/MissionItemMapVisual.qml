@@ -21,6 +21,13 @@ Item {
 
         asynchronous: true
 
+        // This is a delegate, so the mission model changing takes it away --
+        // at startup that happens while the visual is still incubating, and
+        // Qt warns that the context went out from under an object it was
+        // building. Clearing the source cancels the incubation; leaving it
+        // set means the incubator is torn down mid-build instead.
+        Component.onDestruction: mapVisualLoader.source = ""
+
         Component.onCompleted: {
             mapVisualLoader.setSource(object.mapVisualQML, {
                 map: _root.map,
