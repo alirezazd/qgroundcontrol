@@ -1,0 +1,1224 @@
+{
+  "version": 1,
+  "parameters": [
+    {
+      "name": "SYSID_THISMAV",
+      "type": "Uint8",
+      "shortDesc": "System ID",
+      "longDesc": "MAVLink system ID this vehicle answers to. Fixed by the build.",
+      "group": "Identity",
+      "category": "System"
+    },
+    {
+      "name": "MAV_SYS_ID",
+      "type": "Uint8",
+      "shortDesc": "System ID",
+      "longDesc": "Same value as SYSID_THISMAV, under the name a ground station looks for first.",
+      "group": "Identity",
+      "category": "System"
+    },
+    {
+      "name": "SYS_COMP_ID",
+      "type": "Uint8",
+      "shortDesc": "Component ID",
+      "longDesc": "MAVLink component ID of the bridge. Fixed by the build.",
+      "group": "Identity",
+      "category": "System"
+    },
+    {
+      "name": "CAL_ACC0_ID",
+      "type": "Int32",
+      "shortDesc": "Accelerometer calibration ID",
+      "longDesc": "Identifier of the calibrated IMU, taken from the flight controller. A ground station reads a non-zero value as \"this sensor has been calibrated\" and will otherwise refuse to arm or offer to calibrate. One IMU serves both axes, so this and CAL_GYRO0_ID report the same identifier.",
+      "group": "Calibration",
+      "category": "System"
+    },
+    {
+      "name": "CAL_GYRO0_ID",
+      "type": "Int32",
+      "shortDesc": "Gyroscope calibration ID",
+      "longDesc": "Identifier of the calibrated IMU, taken from the flight controller. A ground station reads a non-zero value as \"this sensor has been calibrated\".",
+      "group": "Calibration",
+      "category": "System"
+    },
+    {
+      "name": "CAL_MAG0_ID",
+      "type": "Int32",
+      "shortDesc": "Magnetometer 0 ID",
+      "longDesc": "Always zero: no magnetometer is fitted.",
+      "group": "Sensors",
+      "category": "System"
+    },
+    {
+      "name": "CAL_MAG1_ID",
+      "type": "Int32",
+      "shortDesc": "Magnetometer 1 ID",
+      "longDesc": "Always zero: no magnetometer is fitted.",
+      "group": "Sensors",
+      "category": "System"
+    },
+    {
+      "name": "CAL_MAG2_ID",
+      "type": "Int32",
+      "shortDesc": "Magnetometer 2 ID",
+      "longDesc": "Always zero: no magnetometer is fitted.",
+      "group": "Sensors",
+      "category": "System"
+    },
+    {
+      "name": "CAL_MAG0_ROT",
+      "type": "Int32",
+      "shortDesc": "Magnetometer 0 rotation",
+      "longDesc": "Always -1, the value for a magnetometer that is not fitted.",
+      "group": "Sensors",
+      "category": "System"
+    },
+    {
+      "name": "CAL_MAG1_ROT",
+      "type": "Int32",
+      "shortDesc": "Magnetometer 1 rotation",
+      "longDesc": "Always -1, the value for a magnetometer that is not fitted.",
+      "group": "Sensors",
+      "category": "System"
+    },
+    {
+      "name": "CAL_MAG2_ROT",
+      "type": "Int32",
+      "shortDesc": "Magnetometer 2 rotation",
+      "longDesc": "Always -1, the value for a magnetometer that is not fitted.",
+      "group": "Sensors",
+      "category": "System"
+    },
+    {
+      "name": "SENS_BOARD_ROT",
+      "type": "Int32",
+      "shortDesc": "Board rotation",
+      "longDesc": "Always zero. The sensor orientation is a build-time setting on the flight controller, not something the ground station can change, so no rotation is reported here rather than one that could be edited and ignored.",
+      "group": "Calibration",
+      "category": "System"
+    },
+    {
+      "name": "SENS_DPRES_OFF",
+      "type": "Float",
+      "shortDesc": "Differential pressure offset",
+      "longDesc": "Always zero. No airspeed sensor is fitted; the parameter exists because a ground station expects it to.",
+      "units": "Pa",
+      "group": "Sensors",
+      "category": "System",
+      "volatile": true
+    },
+    {
+      "name": "SYS_HAS_MAG",
+      "type": "Int32",
+      "shortDesc": "Magnetometer fitted",
+      "longDesc": "Always zero: no magnetometer is fitted.",
+      "group": "Sensors",
+      "category": "System",
+      "values": [
+        {
+          "value": 0,
+          "description": "Not fitted"
+        }
+      ]
+    },
+    {
+      "name": "SYS_HAS_NUM_ASPD",
+      "type": "Int32",
+      "shortDesc": "Airspeed sensors fitted",
+      "longDesc": "Always zero: no airspeed sensor is fitted.",
+      "group": "Sensors",
+      "category": "System",
+      "values": [
+        {
+          "value": 0,
+          "description": "None fitted"
+        }
+      ]
+    },
+    {
+      "name": "SYS_AUTOSTART",
+      "type": "Int32",
+      "shortDesc": "Airframe ID",
+      "longDesc": "Airframe identifier the ground station uses to pick its airframe page. Fixed by the build: the airframe is a property of the vehicle, not a setting.",
+      "group": "Airframe",
+      "category": "System"
+    },
+    {
+      "name": "COM_RC_IN_MODE",
+      "type": "Uint8",
+      "shortDesc": "RC input mode",
+      "longDesc": "Always zero: this vehicle is flown from an RC transmitter.",
+      "group": "Radio",
+      "category": "System",
+      "values": [
+        {
+          "value": 0,
+          "description": "RC transmitter"
+        }
+      ]
+    },
+    {
+      "name": "RC_CHAN_CNT",
+      "type": "Uint8",
+      "shortDesc": "Calibrated channel count",
+      "longDesc": "Number of RC channels this firmware holds calibration for.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC_MAP_ROLL",
+      "type": "Uint8",
+      "shortDesc": "Roll channel",
+      "longDesc": "RC channel carrying roll. Must be 1-4, and no two sticks may share a channel.",
+      "min": 1,
+      "max": 4,
+      "group": "Radio",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC_MAP_PITCH",
+      "type": "Uint8",
+      "shortDesc": "Pitch channel",
+      "longDesc": "RC channel carrying pitch. Must be 1-4, and no two sticks may share a channel.",
+      "min": 1,
+      "max": 4,
+      "group": "Radio",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC_MAP_YAW",
+      "type": "Uint8",
+      "shortDesc": "Yaw channel",
+      "longDesc": "RC channel carrying yaw. Must be 1-4, and no two sticks may share a channel.",
+      "min": 1,
+      "max": 4,
+      "group": "Radio",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC_MAP_THROTTLE",
+      "type": "Uint8",
+      "shortDesc": "Throttle channel",
+      "longDesc": "RC channel carrying throttle. Must be 1-4, and no two sticks may share a channel.",
+      "min": 1,
+      "max": 4,
+      "group": "Radio",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC_MAP_FLAPS",
+      "type": "Int32",
+      "shortDesc": "Flaps channel",
+      "longDesc": "Unmapped. This airframe has no flaps.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC_MAP_AUX1",
+      "type": "Int32",
+      "shortDesc": "Aux 1 channel",
+      "longDesc": "Unmapped. Auxiliary channel mappings are not implemented.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC_MAP_AUX2",
+      "type": "Int32",
+      "shortDesc": "Aux 2 channel",
+      "longDesc": "Unmapped. Auxiliary channel mappings are not implemented.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC_MAP_PARAM1",
+      "type": "Int32",
+      "shortDesc": "Tuning channel 1",
+      "longDesc": "Unmapped. In-flight parameter tuning is not implemented.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC_MAP_PARAM2",
+      "type": "Int32",
+      "shortDesc": "Tuning channel 2",
+      "longDesc": "Unmapped. In-flight parameter tuning is not implemented.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC_MAP_PARAM3",
+      "type": "Int32",
+      "shortDesc": "Tuning channel 3",
+      "longDesc": "Unmapped. In-flight parameter tuning is not implemented.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC_MAP_PAY_SW",
+      "type": "Int32",
+      "shortDesc": "Payload switch channel",
+      "longDesc": "Unmapped. No payload is carried.",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "MAV_HB_MS",
+      "type": "Uint16",
+      "shortDesc": "Heartbeat period",
+      "longDesc": "Interval between HEARTBEAT frames. Set at build time.",
+      "units": "ms",
+      "min": 100,
+      "max": 1000,
+      "group": "Telemetry rates",
+      "category": "Standard"
+    },
+    {
+      "name": "MAV_GPS_MS",
+      "type": "Uint16",
+      "shortDesc": "GPS stream period",
+      "longDesc": "Interval between GPS_RAW_INT frames. Set at build time.",
+      "units": "ms",
+      "min": 1,
+      "max": 60000,
+      "group": "Telemetry rates",
+      "category": "Standard"
+    },
+    {
+      "name": "MAV_ATT_MS",
+      "type": "Uint16",
+      "shortDesc": "Attitude stream period",
+      "longDesc": "Interval between ATTITUDE frames. Set at build time.",
+      "units": "ms",
+      "min": 1,
+      "max": 60000,
+      "group": "Telemetry rates",
+      "category": "Standard"
+    },
+    {
+      "name": "MAV_GPOS_MS",
+      "type": "Uint16",
+      "shortDesc": "Global position stream period",
+      "longDesc": "Interval between GLOBAL_POSITION_INT frames. Set at build time.",
+      "units": "ms",
+      "min": 1,
+      "max": 60000,
+      "group": "Telemetry rates",
+      "category": "Standard"
+    },
+    {
+      "name": "MAV_BATT_MS",
+      "type": "Uint16",
+      "shortDesc": "Battery stream period",
+      "longDesc": "Interval between BATTERY_STATUS frames. Set at build time.",
+      "units": "ms",
+      "min": 1,
+      "max": 60000,
+      "group": "Telemetry rates",
+      "category": "Standard"
+    },
+    {
+      "name": "MAV_RC_MS",
+      "type": "Uint16",
+      "shortDesc": "RC channels stream period",
+      "longDesc": "Interval between RC_CHANNELS frames. Set at build time.",
+      "units": "ms",
+      "min": 1,
+      "max": 60000,
+      "group": "Telemetry rates",
+      "category": "Standard"
+    },
+    {
+      "name": "COM_RC_LOSS_T",
+      "type": "Float",
+      "shortDesc": "RC loss timeout",
+      "longDesc": "Reported as zero. The RC loss failsafe lives on the flight controller and is not configurable from here yet.",
+      "units": "s",
+      "group": "Radio",
+      "category": "System"
+    },
+    {
+      "name": "RC1_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 1 minimum",
+      "longDesc": "Pulse width at the low end of channel 1, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC1_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 1 maximum",
+      "longDesc": "Pulse width at the high end of channel 1, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC1_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 1 centre",
+      "longDesc": "Pulse width with channel 1 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC1_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 1 direction",
+      "longDesc": "Whether channel 1 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC2_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 2 minimum",
+      "longDesc": "Pulse width at the low end of channel 2, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC2_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 2 maximum",
+      "longDesc": "Pulse width at the high end of channel 2, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC2_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 2 centre",
+      "longDesc": "Pulse width with channel 2 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC2_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 2 direction",
+      "longDesc": "Whether channel 2 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC3_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 3 minimum",
+      "longDesc": "Pulse width at the low end of channel 3, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC3_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 3 maximum",
+      "longDesc": "Pulse width at the high end of channel 3, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC3_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 3 centre",
+      "longDesc": "Pulse width with channel 3 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC3_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 3 direction",
+      "longDesc": "Whether channel 3 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC4_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 4 minimum",
+      "longDesc": "Pulse width at the low end of channel 4, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC4_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 4 maximum",
+      "longDesc": "Pulse width at the high end of channel 4, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC4_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 4 centre",
+      "longDesc": "Pulse width with channel 4 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC4_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 4 direction",
+      "longDesc": "Whether channel 4 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC5_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 5 minimum",
+      "longDesc": "Pulse width at the low end of channel 5, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC5_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 5 maximum",
+      "longDesc": "Pulse width at the high end of channel 5, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC5_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 5 centre",
+      "longDesc": "Pulse width with channel 5 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC5_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 5 direction",
+      "longDesc": "Whether channel 5 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC6_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 6 minimum",
+      "longDesc": "Pulse width at the low end of channel 6, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC6_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 6 maximum",
+      "longDesc": "Pulse width at the high end of channel 6, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC6_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 6 centre",
+      "longDesc": "Pulse width with channel 6 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC6_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 6 direction",
+      "longDesc": "Whether channel 6 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC7_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 7 minimum",
+      "longDesc": "Pulse width at the low end of channel 7, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC7_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 7 maximum",
+      "longDesc": "Pulse width at the high end of channel 7, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC7_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 7 centre",
+      "longDesc": "Pulse width with channel 7 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC7_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 7 direction",
+      "longDesc": "Whether channel 7 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC8_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 8 minimum",
+      "longDesc": "Pulse width at the low end of channel 8, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC8_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 8 maximum",
+      "longDesc": "Pulse width at the high end of channel 8, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC8_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 8 centre",
+      "longDesc": "Pulse width with channel 8 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC8_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 8 direction",
+      "longDesc": "Whether channel 8 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC9_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 9 minimum",
+      "longDesc": "Pulse width at the low end of channel 9, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC9_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 9 maximum",
+      "longDesc": "Pulse width at the high end of channel 9, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC9_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 9 centre",
+      "longDesc": "Pulse width with channel 9 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC9_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 9 direction",
+      "longDesc": "Whether channel 9 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC10_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 10 minimum",
+      "longDesc": "Pulse width at the low end of channel 10, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC10_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 10 maximum",
+      "longDesc": "Pulse width at the high end of channel 10, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC10_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 10 centre",
+      "longDesc": "Pulse width with channel 10 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC10_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 10 direction",
+      "longDesc": "Whether channel 10 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC11_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 11 minimum",
+      "longDesc": "Pulse width at the low end of channel 11, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC11_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 11 maximum",
+      "longDesc": "Pulse width at the high end of channel 11, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC11_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 11 centre",
+      "longDesc": "Pulse width with channel 11 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC11_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 11 direction",
+      "longDesc": "Whether channel 11 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC12_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 12 minimum",
+      "longDesc": "Pulse width at the low end of channel 12, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC12_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 12 maximum",
+      "longDesc": "Pulse width at the high end of channel 12, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC12_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 12 centre",
+      "longDesc": "Pulse width with channel 12 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC12_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 12 direction",
+      "longDesc": "Whether channel 12 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC13_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 13 minimum",
+      "longDesc": "Pulse width at the low end of channel 13, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC13_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 13 maximum",
+      "longDesc": "Pulse width at the high end of channel 13, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC13_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 13 centre",
+      "longDesc": "Pulse width with channel 13 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC13_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 13 direction",
+      "longDesc": "Whether channel 13 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC14_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 14 minimum",
+      "longDesc": "Pulse width at the low end of channel 14, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC14_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 14 maximum",
+      "longDesc": "Pulse width at the high end of channel 14, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC14_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 14 centre",
+      "longDesc": "Pulse width with channel 14 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC14_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 14 direction",
+      "longDesc": "Whether channel 14 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC15_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 15 minimum",
+      "longDesc": "Pulse width at the low end of channel 15, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC15_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 15 maximum",
+      "longDesc": "Pulse width at the high end of channel 15, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC15_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 15 centre",
+      "longDesc": "Pulse width with channel 15 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC15_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 15 direction",
+      "longDesc": "Whether channel 15 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    },
+    {
+      "name": "RC16_MIN",
+      "type": "Uint16",
+      "shortDesc": "Channel 16 minimum",
+      "longDesc": "Pulse width at the low end of channel 16, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC16_MAX",
+      "type": "Uint16",
+      "shortDesc": "Channel 16 maximum",
+      "longDesc": "Pulse width at the high end of channel 16, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC16_TRIM",
+      "type": "Uint16",
+      "shortDesc": "Channel 16 centre",
+      "longDesc": "Pulse width with channel 16 centred, set by the radio calibration.",
+      "units": "us",
+      "min": 800,
+      "max": 2200,
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false
+    },
+    {
+      "name": "RC16_REV",
+      "type": "Int8",
+      "shortDesc": "Channel 16 direction",
+      "longDesc": "Whether channel 16 is reversed. Only +1 and -1 are accepted.",
+      "group": "Radio calibration",
+      "category": "Standard",
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Normal"
+        },
+        {
+          "value": -1,
+          "description": "Reversed"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file alias="qmlimages/32Raven/BrandImage.png">resources/32Raven.png</file>
+        <file alias="FirmwarePlugin/32Raven/32RavenParameterFactMetaData.json">resources/32RavenParameterFactMetaData.json</file>
     </qresource>
 </RCC>
