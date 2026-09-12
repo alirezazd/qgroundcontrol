@@ -9,8 +9,13 @@ qt_version := `python3 ./tools/setup/read_config.py --get qt.version 2>/dev/null
 cmake_min_version := `python3 ./tools/setup/read_config.py --get build.cmake_minimum_version 2>/dev/null || echo "3.25"`
 gstreamer_version := `python3 ./tools/setup/read_config.py --get gstreamer.version.default 2>/dev/null || echo "1.28.4"`
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
-build_type := env_var_or_default("BUILD_TYPE", "Debug")
-build_dir := "build"
+# Defaults are this fork's: a custom build renames the binary through
+# QGC_APP_NAME, so the stock name would point at a file that is never built.
+# All three take an environment override, so an upstream layout still works
+# with BUILD_DIR=build BUILD_TYPE=Debug APP_NAME=QGroundControl.
+build_type := env_var_or_default("BUILD_TYPE", "Release")
+build_dir := env_var_or_default("BUILD_DIR", "build-v514")
+app_name := env_var_or_default("APP_NAME", "32RavenQGC")
 # Use all cores by default; override with JOBS=N.
 jobs := env_var_or_default("JOBS", `python3 -c "import os; print(os.cpu_count() or 4)" 2>/dev/null || echo 4`)
 
@@ -41,7 +46,7 @@ configure: submodules
 
 # Build the project
 build:
-    cmake --build {{build_dir}} --config {{build_type}} --parallel {{jobs}}
+    cmake --build {{build_dir}} --config {{build_type}} --parallel {{jobs}} --target {{app_name}}
 
 # Configure and build Release
 release:
@@ -93,9 +98,9 @@ check: lint test
 # Run & Deploy
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Launch QGroundControl
+# Launch the ground station
 run:
-    ./{{build_dir}}/{{build_type}}/QGroundControl
+    ./{{build_dir}}/{{build_type}}/{{app_name}}
 
 # Build documentation
 docs:
