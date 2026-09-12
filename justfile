@@ -98,8 +98,9 @@ check: lint test
 # Run & Deploy
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Launch the ground station
-run:
+# Build what changed, then launch. The dependency is free when nothing has:
+# ninja reports no work and the binary starts immediately.
+run: build
     ./{{build_dir}}/{{build_type}}/{{app_name}}
 
 # Build documentation
