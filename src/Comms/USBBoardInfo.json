@@ -1,5 +1,5 @@
 {
-    "comment":  "AutoConnect usb board info",
+    "comment":  "AutoConnect usb board info. Every boardClass here must be one of the four _boardClassStringToType knows: anything else fails the whole file and silently disables serial autoconnect. A port to be left alone is therefore absent rather than listed -- which is why 0x303A/0x1001, upstream's DroneBridge Radio and in fact every ESP32-C3/S3 native-USB console, is not here.",
     "version":  1,
     "fileType": "USBBoardInfo",
 
@@ -66,7 +66,6 @@
 
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
         { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
-        { "vendorID": 12346, "productID": 4097,     "boardClass": "SiK Radio",  "name": "DroneBridge Radio",    "comment": "ESP32-based telemetry radio" },
 
         { "vendorID": 5446, "productID": 424,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (M8P)" },
         { "vendorID": 5446, "productID": 425,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (F9P)" },
