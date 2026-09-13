@@ -17,3 +17,11 @@ QGCCorePlugin *RavenPlugin::instance()
 {
     return _ravenPluginInstance();
 }
+
+QGCOptions *RavenPlugin::options()
+{
+    if (!_options) {
+        _options = new RavenOptions(this);
+    }
+    return _options;
+}
