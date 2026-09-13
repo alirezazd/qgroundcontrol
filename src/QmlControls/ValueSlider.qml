@@ -49,7 +49,12 @@ Control {
     property real   _firstTickPixelOffset:  _indicatorCenterPos - ((from - _majorTickMinValue) / _sliderValuePerPixel)
     property real   _firstPixelValue:       _majorTickMinValue - (_firstTickPixelOffset * _sliderValuePerPixel)
 
-    property int     _cMajorTicks: (_majorTickMaxValue - _majorTickMinValue) / majorTickStepSize + 1
+    // Bounded because the count feeds back into the control's own width: a
+    // range absurdly wide for its step asks for more delegates than Qt will
+    // build and leaves the layout oscillating instead of settling. A strip
+    // this long is already far past anything a person can flick through.
+    property int     _cMaxMajorTicks: 1000
+    property int     _cMajorTicks: Math.min((_majorTickMaxValue - _majorTickMinValue) / majorTickStepSize + 1, _cMaxMajorTicks)
 
     // Calculate the slider width such that we can flick through the full range of the slider
     property real   _sliderContentSize: ((to - _firstPixelValue) / _sliderValuePerPixel) + (background.width - _indicatorCenterPos)

@@ -8,8 +8,12 @@ import QGroundControl.Controls
 ValueSlider {
     id:             control
     value:          _fact.value
-    from:           _fact.min
-    to:             _fact.max
+    // A missing parameter falls back to a default-constructed Fact, whose min
+    // and max are the int32 extremes. Handed to the slider those become a
+    // range no tick strip can express, so the fallback carries the base
+    // control's own bounds instead.
+    from:           fact ? _fact.min : 0
+    to:             fact ? _fact.max : 100
     unitsString:    _fact.units
     decimalPlaces:  _fact.decimalPlaces
 
