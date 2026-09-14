@@ -45,9 +45,10 @@
       "name": "CAL_MAG0_ID",
       "type": "Int32",
       "shortDesc": "Magnetometer 0 ID",
-      "longDesc": "Always zero: no magnetometer is fitted.",
+      "longDesc": "The compass's device id once a calibration is stored, zero before -- which is how the ground station knows one is needed. Set by a calibration, not by hand.",
       "group": "Sensors",
-      "category": "System"
+      "category": "System",
+      "volatile": true
     },
     {
       "name": "CAL_MAG1_ID",
@@ -69,7 +70,7 @@
       "name": "CAL_MAG0_ROT",
       "type": "Int32",
       "shortDesc": "Magnetometer 0 rotation",
-      "longDesc": "Always -1, the value for a magnetometer that is not fitted.",
+      "longDesc": "Always 0, no rotation: the module's mounting is applied in the firmware's axis map, so there is nothing to set here.",
       "group": "Sensors",
       "category": "System"
     },
@@ -111,13 +112,13 @@
       "name": "SYS_HAS_MAG",
       "type": "Int32",
       "shortDesc": "Magnetometer fitted",
-      "longDesc": "Always zero: no magnetometer is fitted.",
+      "longDesc": "Always one: the compass on the GPS module. Fixed by the build.",
       "group": "Sensors",
       "category": "System",
       "values": [
         {
-          "value": 0,
-          "description": "Not fitted"
+          "value": 1,
+          "description": "Fitted"
         }
       ]
     },
@@ -325,6 +326,17 @@
       "type": "Uint16",
       "shortDesc": "RC channels stream period",
       "longDesc": "Interval between RC_CHANNELS frames. Set at build time.",
+      "units": "ms",
+      "min": 1,
+      "max": 60000,
+      "group": "Telemetry rates",
+      "category": "Standard"
+    },
+    {
+      "name": "MAV_ESC_MS",
+      "type": "Uint16",
+      "shortDesc": "ESC status stream period",
+      "longDesc": "Interval between ESC_STATUS frames. Set at build time.",
       "units": "ms",
       "min": 1,
       "max": 60000,
