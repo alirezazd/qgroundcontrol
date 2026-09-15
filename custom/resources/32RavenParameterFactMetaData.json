@@ -201,45 +201,117 @@
       "name": "RC_MAP_ROLL",
       "type": "Uint8",
       "shortDesc": "Roll channel",
-      "longDesc": "RC channel carrying roll. Must be 1-4, and no two sticks may share a channel.",
+      "longDesc": "RC channel carrying roll. Giving it another stick's channel swaps the two.",
       "min": 1,
       "max": 4,
       "group": "Radio",
       "category": "Standard",
-      "readOnly": false
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Channel 1"
+        },
+        {
+          "value": 2,
+          "description": "Channel 2"
+        },
+        {
+          "value": 3,
+          "description": "Channel 3"
+        },
+        {
+          "value": 4,
+          "description": "Channel 4"
+        }
+      ]
     },
     {
       "name": "RC_MAP_PITCH",
       "type": "Uint8",
       "shortDesc": "Pitch channel",
-      "longDesc": "RC channel carrying pitch. Must be 1-4, and no two sticks may share a channel.",
+      "longDesc": "RC channel carrying pitch. Giving it another stick's channel swaps the two.",
       "min": 1,
       "max": 4,
       "group": "Radio",
       "category": "Standard",
-      "readOnly": false
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Channel 1"
+        },
+        {
+          "value": 2,
+          "description": "Channel 2"
+        },
+        {
+          "value": 3,
+          "description": "Channel 3"
+        },
+        {
+          "value": 4,
+          "description": "Channel 4"
+        }
+      ]
     },
     {
       "name": "RC_MAP_YAW",
       "type": "Uint8",
       "shortDesc": "Yaw channel",
-      "longDesc": "RC channel carrying yaw. Must be 1-4, and no two sticks may share a channel.",
+      "longDesc": "RC channel carrying yaw. Giving it another stick's channel swaps the two.",
       "min": 1,
       "max": 4,
       "group": "Radio",
       "category": "Standard",
-      "readOnly": false
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Channel 1"
+        },
+        {
+          "value": 2,
+          "description": "Channel 2"
+        },
+        {
+          "value": 3,
+          "description": "Channel 3"
+        },
+        {
+          "value": 4,
+          "description": "Channel 4"
+        }
+      ]
     },
     {
       "name": "RC_MAP_THROTTLE",
       "type": "Uint8",
       "shortDesc": "Throttle channel",
-      "longDesc": "RC channel carrying throttle. Must be 1-4, and no two sticks may share a channel.",
+      "longDesc": "RC channel carrying throttle. Giving it another stick's channel swaps the two.",
       "min": 1,
       "max": 4,
       "group": "Radio",
       "category": "Standard",
-      "readOnly": false
+      "readOnly": false,
+      "values": [
+        {
+          "value": 1,
+          "description": "Channel 1"
+        },
+        {
+          "value": 2,
+          "description": "Channel 2"
+        },
+        {
+          "value": 3,
+          "description": "Channel 3"
+        },
+        {
+          "value": 4,
+          "description": "Channel 4"
+        }
+      ]
     },
     {
       "name": "RC_MAP_FLAPS",

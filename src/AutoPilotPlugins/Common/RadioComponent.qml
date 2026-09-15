@@ -20,7 +20,7 @@ SetupPage {
             return 0
         }
         if (activeVehicle.ravenFirmware) {
-            return []
+            return [ "RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE" ]
         }
 
         const flaps = activeVehicle.multiRotor ? [] : [ "RC_MAP_FLAPS" ]
