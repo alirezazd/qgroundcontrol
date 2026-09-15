@@ -39,13 +39,16 @@ RadioComponentController::RadioComponentController(QObject *parent)
     }
 
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
-    _vehicle->startCalibration(QGCMAVLink::CalibrationRadio);
+    // 32Raven has no radio calibration to announce: the page is the map and the monitor.
+    if (!_vehicle->ravenFirmware()) {
+        _vehicle->startCalibration(QGCMAVLink::CalibrationRadio);
+    }
 }
 
 RadioComponentController::~RadioComponentController()
 {
     // qCDebug(RadioComponentControllerLog) << Q_FUNC_INFO << this;
-    if (_vehicle) {
+    if (_vehicle && !_vehicle->ravenFirmware()) {
         // Only PX4 is known to support this command in all versions. For other firmware which may or may not
         // support this we don't show errors on failure.
         _vehicle->stopCalibration(_vehicle->px4Firmware() ? true : false /* showError */);

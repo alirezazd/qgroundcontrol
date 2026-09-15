@@ -15,6 +15,9 @@ QString PX4RadioComponent::name(void) const
 
 QString PX4RadioComponent::description(void) const
 {
+    if (_vehicle->ravenFirmware()) {
+        return tr("Assign the stick channels and watch what the transmitter sends.");
+    }
     return tr("Configure and calibrate your transmitter and assign control channels.");
 }
 

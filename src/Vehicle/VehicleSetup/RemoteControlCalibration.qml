@@ -12,6 +12,9 @@ ColumnLayout {
     required property var controller
     property Component additionalSetupComponent
     property Component additionalMonitorComponent
+    // False for a link whose range the protocol fixes: the attitude controls
+    // and the channel monitor still show, the stick walk and its buttons do not.
+    property bool calibrates: true
 
     // Controllers need access to these UI elements
     property alias statusText: statusText
@@ -147,6 +150,7 @@ ColumnLayout {
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
             spacing: ScreenTools.defaultFontPixelHeight / 2
+            visible: calibrates
 
             Rectangle {
                 id: stickDisplayContainer
@@ -245,6 +249,7 @@ ColumnLayout {
     RowLayout {
         Layout.preferredWidth: parent.width
         spacing: ScreenTools.defaultFontPixelWidth
+        visible: calibrates
 
         QGCButton {
             id: cancelButton

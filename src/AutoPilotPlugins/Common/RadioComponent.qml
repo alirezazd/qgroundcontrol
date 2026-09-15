@@ -11,19 +11,21 @@ import QGroundControl.VehicleSetup
 SetupPage {
     id: radioPage
 
-    // 32Raven has no RC_MAP_AUX1/AUX2, so offering them would map a switch onto a parameter the
-    // vehicle will never answer for.
+    // 32Raven maps the four sticks and nothing else: every switch parameter it serves is pinned
+    // at zero, so a combo for one would offer choices the vehicle refuses.
     readonly property var _switchMappingParams: {
         const activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
 
         if (!activeVehicle || !activeVehicle.px4Firmware) {
             return 0
         }
+        if (activeVehicle.ravenFirmware) {
+            return []
+        }
 
-        const aux = activeVehicle.ravenFirmware ? [] : [ "RC_MAP_AUX1", "RC_MAP_AUX2" ]
         const flaps = activeVehicle.multiRotor ? [] : [ "RC_MAP_FLAPS" ]
 
-        return flaps.concat(aux, [ "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3", "RC_MAP_PAY_SW" ])
+        return flaps.concat([ "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3", "RC_MAP_PAY_SW" ])
     }
     pageComponent: pageComponent
 
@@ -34,6 +36,15 @@ SetupPage {
             id: remoteControlCalibration
 
             useDeadband: false
+            // CRSF fixes the channel range and the transmitter holds the
+            // endpoints, so 32Raven has nothing to calibrate and no Spektrum
+            // receiver to bind.
+            calibrates: !_ravenFirmware
+
+            readonly property bool _ravenFirmware: {
+                const activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
+                return activeVehicle ? activeVehicle.ravenFirmware : false
+            }
 
             controller: RadioComponentController {
                 statusText: remoteControlCalibration.statusText
@@ -52,6 +63,7 @@ SetupPage {
                 ColumnLayout {
                     id: switchSettings
                     Layout.fillWidth: true
+                    visible: radioPage._switchMappingParams.length > 0
 
                     Repeater {
                         model: radioPage._switchMappingParams
@@ -68,6 +80,7 @@ SetupPage {
                     Layout.fillWidth: true
                     implicitHeight: 1
                     color: qgcPal.text
+                    visible: switchSettings.visible
                 }
 
                 RowLayout {
@@ -76,6 +89,7 @@ SetupPage {
                     QGCButton {
                         id: bindButton
                         text: qsTr("Spektrum Bind")
+                        visible: !remoteControlCalibration._ravenFirmware
                         onClicked: spektrumBindDialogFactory.open()
                     }
 
@@ -89,6 +103,7 @@ SetupPage {
 
                     QGCButton {
                         text: qsTr("Copy Trims")
+                        visible: !remoteControlCalibration._ravenFirmware
                         onClicked: QGroundControl.showMessageDialog(radioPage, qsTr("Copy Trims"),
                                                                 qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
                                                                 Dialog.Ok | Dialog.Cancel,
