@@ -74,16 +74,27 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     m_prefetchStyle = QGCNetworkHelper::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers
                                                               : QGeoTiledMap::NoPrefetching;
+    // Same rule as QGCNetworkHelper::isInternetAvailable(): only a positive
+    // Disconnected turns prefetching off, since Unknown/Local is what unmanaged
+    // links report while the network works.
     (void) connect(QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this,
                    [this](QNetworkInformation::Reachability newReachability) {
-                       if (newReachability == QNetworkInformation::Reachability::Online) {
+                       if (newReachability != QNetworkInformation::Reachability::Disconnected) {
                            m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;
                        } else {
                            m_prefetchStyle = QGeoTiledMap::NoPrefetching;
                        }
                    });
 
-    Q_ASSERT(m_networkManager);
+    // The provider plugin hands the manager in; without one there is nothing to
+    // fetch with, and the service provider reports the failure instead of a
+    // release build dereferencing null at the first tile.
+    if (!m_networkManager) {
+        qCWarning(QGeoTiledMappingManagerEngineQGCLog) << "No network access manager; tile fetching unavailable";
+        *error = QGeoServiceProvider::MissingRequiredParameterError;
+        *errorString = QStringLiteral("QGeoTiledMappingManagerEngineQGC: no network access manager");
+        return;
+    }
     QGeoTileFetcherQGC* tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
 
     *error = QGeoServiceProvider::NoError;

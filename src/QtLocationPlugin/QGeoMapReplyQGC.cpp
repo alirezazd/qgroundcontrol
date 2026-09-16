@@ -201,7 +201,12 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
 {
     Q_UNUSED(errorString);
 
-    Q_ASSERT(type == QGCMapTask::TaskType::taskFetchTile);
+    // Only a failed cache fetch is answered with a network fetch; any other task
+    // type reaching this slot is a wiring error, not a reason to hit the network.
+    if (type != QGCMapTask::TaskType::taskFetchTile) {
+        qCWarning(QGeoTiledMapReplyQGCLog) << "Unexpected cache task type" << static_cast<int>(type);
+        return;
+    }
 
     if (!QGCNetworkHelper::isInternetAvailable()) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Network Not Available"));

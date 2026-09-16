@@ -327,10 +327,12 @@ bool isJsonResponse(const QNetworkReply* reply);
 // Network Availability
 // ============================================================================
 
-/// Check if network is available (not disconnected)
+/// Check if network is available: false only when the host's network backend positively reports disconnected
 bool isNetworkAvailable();
 
-/// Check if internet is reachable (online state, stricter than isNetworkAvailable)
+/// Same rule as isNetworkAvailable(). Backends cannot judge links they do not manage (WSL, containers,
+/// externally configured interfaces report Unknown/Local with a working route), so "not Online" must
+/// not be read as offline. Separate entry point for callers asking about the internet specifically.
 bool isInternetAvailable();
 
 /// Check if current network connection is Ethernet

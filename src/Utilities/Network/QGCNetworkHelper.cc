@@ -749,24 +749,13 @@ bool isNetworkAvailable()
 
 bool isInternetAvailable()
 {
-    if (QNetworkInformation::availableBackends().isEmpty()) {
-        return false;
-    }
-
-    if (!QNetworkInformation::loadDefaultBackend()) {
-        return false;
-    }
-
-    if (!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) {
-        return false;
-    }
-
-    const QNetworkInformation* netInfo = QNetworkInformation::instance();
-    if (netInfo == nullptr) {
-        return false;
-    }
-
-    return netInfo->reachability() == QNetworkInformation::Reachability::Online;
+    // Only a positive "disconnected" is trusted. Reachability comes from the host's
+    // network manager, which cannot judge links it does not own: NetworkManager reports
+    // Unknown or Local for WSL's and containers' externally configured interfaces, and
+    // Site whenever its connectivity probe is blocked -- all with a working default
+    // route. Requiring Online here made the map refuse every tile on such hosts. A
+    // fetch that goes ahead and fails reports an ordinary network error instead.
+    return isNetworkAvailable();
 }
 
 bool isNetworkEthernet()
