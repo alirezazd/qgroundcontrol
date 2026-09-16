@@ -48,8 +48,6 @@ jobs:
       run:
         shell: bash
 
-    env:
-
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
