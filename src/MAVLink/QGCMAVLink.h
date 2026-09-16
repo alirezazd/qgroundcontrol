@@ -25,8 +25,10 @@ public:
     static constexpr const FirmwareClass_t FirmwareClassPX4       = MAV_AUTOPILOT_PX4;
     static constexpr const FirmwareClass_t FirmwareClassArduPilot = MAV_AUTOPILOT_ARDUPILOTMEGA;
     static constexpr const FirmwareClass_t FirmwareClassGeneric   = MAV_AUTOPILOT_GENERIC;
-    // Private autopilot id, held until MAVLink assigns 32Raven a MAV_AUTOPILOT enumerator.
-    static constexpr const FirmwareClass_t FirmwareClass32Raven   = 200;
+    // A private autopilot id (200), declared as an enumerator by the 32raven
+    // dialect so the enum can legitimately hold it; the firmware's heartbeat
+    // reports the same number.
+    static constexpr const FirmwareClass_t FirmwareClass32Raven   = MAV_AUTOPILOT_32RAVEN;
 
     static constexpr const VehicleClass_t VehicleClassAirship     = MAV_TYPE_AIRSHIP;
     static constexpr const VehicleClass_t VehicleClassFixedWing   = MAV_TYPE_FIXED_WING;

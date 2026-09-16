@@ -1,0 +1,20 @@
+--- /dev/null
++++ b/message_definitions/v1.0/32raven.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0"?>
++<!-- The 32Raven dialect: everything upstream's "all" carries, plus the
++     autopilot id the 32Raven flight computer reports in its heartbeat.
++     Declaring the id here makes it a real MAV_AUTOPILOT enumerator, so the
++     ground station can hold it in the enum without leaving the value range
++     C++ defines for it. -->
++<mavlink>
++  <include>all.xml</include>
++  <enums>
++    <enum name="MAV_AUTOPILOT">
++      <entry value="200" name="MAV_AUTOPILOT_32RAVEN">
++        <description>32Raven flight computer. A private id outside the range MAVLink has assigned; kept until MAVLink allocates one.</description>
++      </entry>
++    </enum>
++  </enums>
++  <messages/>
++</mavlink>
