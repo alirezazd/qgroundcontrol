@@ -7,5 +7,5 @@ class RavenAutoPilotPlugin : public PX4AutoPilotPlugin
     Q_OBJECT
 
 public:
-    RavenAutoPilotPlugin(Vehicle *vehicle, QObject *parent);
+    RavenAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
 };
