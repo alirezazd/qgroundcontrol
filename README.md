@@ -1,25 +1,31 @@
-> **32Raven QGroundControl fork**
+> **32RavenQGC** -- the QGroundControl fork for the
+> [32Raven flight controller](https://github.com/alirezazd/32raven)
 >
-> This repository is the QGroundControl integration branch for the
-> [32Raven flight controller](https://github.com/alirezazd/32raven). The
-> default branch is `32Raven`, rebased onto a single pinned upstream release
-> tag rather than tracking a branch, so the base is always a known build.
+> [![Latest release](https://img.shields.io/github/v/release/alirezazd/qgroundcontrol?include_prereleases&label=32RavenQGC)](https://github.com/alirezazd/qgroundcontrol/releases/latest)
 >
-> **Base: `v5.1.4`** (QGroundControl V5.1 Stable, 2026-08-30).
+> **Download.** Every release ships Windows installers (x64, ARM64), a universal macOS DMG, Linux
+> AppImages (x86_64, aarch64) and an Android APK, with `SHA256SUMS`, on the
+> [releases page](https://github.com/alirezazd/qgroundcontrol/releases). The macOS build is not
+> notarized (System Settings, Privacy & Security, Open Anyway). The APK is signed with this fork's
+> key, so each release installs over the previous one.
 >
-> Everything 32Raven-specific lives in `custom/`. Three patches to upstream
-> files are unavoidable and are kept as separate commits so each can be
-> dropped when upstream absorbs it:
+> **Build.** `just doctor` reports what the machine is missing, `just setup` installs it, pulls
+> the submodules, configures and builds, and `just run` launches the result (under WSL it also
+> attaches the USB radio). `just --list` has the rest; [tools/README.md](tools/README.md) the
+> details.
 >
-> 1. A `FirmwarePlugin` hook letting a firmware declare parameters it does not
->    implement, so they are not reported as missing. Firmware-agnostic.
-> 2. Registration of 32Raven as a firmware class, pending a `MAV_AUTOPILOT`
->    enumerator from the MAVLink project.
-> 3. Hiding `RC_MAP_AUX1`/`RC_MAP_AUX2` in radio setup, which 32Raven has no
->    parameters for.
+> **What this fork is.** The default branch `32Raven` is rebased onto one pinned upstream release
+> tag rather than tracking a branch, so the base is always a known build: currently **`v5.1.4`**
+> (QGroundControl V5.1 Stable, 2026-08-30). Everything 32Raven-specific lives in `custom/`.
+> Changes to upstream files are kept as separate, single-purpose commits so each can be dropped
+> when upstream absorbs it; `git log v5.1.4..32Raven` lists them. Among them: 32Raven registered
+> as a firmware class with a MAVLink dialect of its own, `FirmwarePlugin` hooks for a firmware
+> that compiles its metadata into the ground station and does not implement every parameter,
+> radio and sensor setup pages trimmed to what the board has, and a tag-driven release pipeline
+> that builds every platform on GitHub Actions.
 >
-> Use this fork when building the 32Raven ground station app. Use upstream
-> QGroundControl for general PX4/ArduPilot releases.
+> Use this fork for the 32Raven ground station. Use upstream QGroundControl for general
+> PX4/ArduPilot vehicles.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Dronecode/UX-Design/35d8148a8a0559cd4bcf50bfa2c94614983cce91/QGC/Branding/Deliverables/QGC_RGB_Logo_Horizontal_Positive_PREFERRED/QGC_RGB_Logo_Horizontal_Positive_PREFERRED.svg" alt="QGroundControl Logo" width="500">
