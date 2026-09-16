@@ -49,7 +49,6 @@ jobs:
         shell: bash
 
     env:
-      PACKAGE: QGroundControl
 
     steps:
       - name: Harden Runner
@@ -95,8 +94,8 @@ jobs:
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/attest-and-upload
         with:
-          artifact-name: ${{ env.PACKAGE }}.app
+          artifact-name: ${{ env.QGC_APP_NAME }}.app
           # iOS uses Ninja Multi-Config; the .app lands in build/<config>/, not build/.
-          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
-          package-name: ${{ env.PACKAGE }}
+          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.QGC_APP_NAME }}.app
+          package-name: ${{ env.QGC_APP_NAME }}
           upload-aws: 'false'
