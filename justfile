@@ -27,10 +27,16 @@ default:
 # Setup
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Install system dependencies (Debian/Ubuntu)
-deps:
+# Preflight the host, read-only (TARGET=build|test|lint|all); exits 1 where a recipe is blocked
+doctor target=env_var_or_default("TARGET", "all"):
+    python3 ./tools/doctor.py --target {{target}} --qt-root {{qt_dir}} -B {{build_dir}} -t {{build_type}} --app-name {{app_name}}
+
+# Install system dependencies; auto-detects apt/dnf/pacman/brew (forwards ARGS: --dry-run, --category qt, ...)
+install-deps *ARGS:
     @echo "Installing dependencies (requires sudo)..."
-    python3 ./tools/setup/install_dependencies --platform debian
+    python3 ./tools/setup/install_dependencies {{ARGS}}
+
+alias deps := install-deps
 
 # Initialize git submodules
 submodules:
@@ -60,8 +66,8 @@ clean *ARGS:
 # Clean, configure, and build
 rebuild: clean configure build
 
-# Full setup: deps, submodules, configure, build
-setup: deps submodules configure build
+# Full setup: install-deps, submodules, configure, build
+setup: install-deps submodules configure build
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Quality
@@ -71,9 +77,15 @@ setup: deps submodules configure build
 test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
     cd {{build_dir}} && ctest --output-on-failure -L "{{labels}}" -LE "{{exclude}}"
 
-# Run pre-commit checks
+# Lint what you changed: uncommitted, untracked, and commits not yet upstream
 lint:
-    pre-commit run --all-files
+    python3 ./tools/pre_commit.py --changed
+
+# What CI runs: every hook over every file. Advisory there (failures go to a PR
+# comment, the job passes); here the fixer hooks rewrite files, so run it on a
+# clean tree and expect upstream's own findings.
+lint-all:
+    python3 ./tools/pre_commit.py
 
 # Check code formatting (no changes)
 format:
@@ -100,8 +112,29 @@ check: lint test
 
 # Build what changed, then launch. The dependency is free when nothing has:
 # ninja reports no work and the binary starts immediately.
+# WSLg (/dev/dxg present): Fedora's Mesa ships the D3D12 GPU driver but never
+# selects it on its own, so the app renders on llvmpipe. WSL_GPU=1 opts into
+# D3D12 -- opt-in only, because Mesa 26.2's d3d12 driver deadlocks the render
+# thread on itself (pb_slab reclaim inside alloc) after a while, leaving a
+# window that cannot be closed.
+# A session started before `usermod -aG dialout` lacks the group until the
+# login is redone (VS Code terminals inherit it from a server that is older
+# still); sg re-enters with it, so serial ports open without a relogin.
 run: build
-    ./{{build_dir}}/{{build_type}}/{{app_name}}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -e /dev/dxg ] && [ "${WSL_GPU:-0}" = 1 ] && [ -z "${GALLIUM_DRIVER:-}" ]; then
+        export GALLIUM_DRIVER=d3d12
+    fi
+    app=./{{build_dir}}/{{build_type}}/{{app_name}}
+    # WSL: forward every usbipd-bound USB device (attachments die with the VM).
+    python3 ./tools/setup/wsl_usb_attach.py
+    for group in dialout uucp; do
+        if getent group "$group" | cut -d: -f4 | tr ',' '\n' | grep -qx "$USER" && ! id -nG | grep -qw "$group"; then
+            exec sg "$group" -c "exec $app"
+        fi
+    done
+    exec "$app"
 
 # Build documentation
 docs:

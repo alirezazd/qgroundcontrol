@@ -57,6 +57,7 @@ tools/
 ├── clean.py                 # Clean build artifacts and caches
 ├── configure.py             # CMake configuration wrapper
 ├── coverage.py               # Code coverage reports
+├── doctor.py                # Preflight the host per recipe (just doctor)
 ├── generate_docs.py         # Generate API docs (Doxygen)
 ├── moccache.py              # Content-addressed cache for Qt moc (AUTOMOC wrapper)
 ├── pre_commit.py            # Pre-commit hook runner
@@ -92,10 +93,11 @@ with no arguments to print this list from the tool itself.
 
 ### Setup
 
-| Recipe            | Description                                                       |
-| ----------------- | ----------------------------------------------------------------- |
-| `just deps`       | Install system build dependencies (Debian/Ubuntu, via `sudo apt`) |
-| `just submodules` | Initialize/update git submodules                                  |
+| Recipe              | Description                                                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `just doctor`       | Preflight the host, read-only; `TARGET=build\|test\|lint` picks which recipe's needs gate the exit code                                        |
+| `just install-deps` | Install system build dependencies; auto-detects apt/dnf/pacman/brew (alias: `just deps`). On Fedora this includes Qt itself and the lint tools |
+| `just submodules`   | Initialize/update git submodules                                                                                                               |
 
 ### Build
 
@@ -106,19 +108,20 @@ with no arguments to print this list from the tool itself.
 | `just release`      | Configure and build in Release mode (testing disabled)                                           |
 | `just clean [ARGS]` | Clean the build directory; forwards `ARGS` to `tools/clean.py` (`--cache`, `--all`, `--dry-run`) |
 | `just rebuild`      | `clean` + `configure` + `build`                                                                  |
-| `just setup`        | Full first-time setup: `deps` + `submodules` + `configure` + `build`                             |
+| `just setup`        | Full first-time setup: `install-deps` + `submodules` + `configure` + `build`                     |
 
 ### Quality
 
-| Recipe            | Description                                                                                    |
-| ----------------- | ---------------------------------------------------------------------------------------------- |
-| `just test`       | Run unit tests via ctest; defaults to labels `Unit`/`Integration`, excluding `Flaky`/`Network` |
-| `just lint`       | Run all pre-commit checks (`pre-commit run --all-files`)                                       |
-| `just format`     | Check code formatting with clang-format (no changes)                                           |
-| `just format-fix` | Apply clang-format fixes                                                                       |
-| `just analyze`    | Run static analysis (`tools/analyze.py`, default tool clang-tidy)                              |
-| `just coverage`   | Build with coverage instrumentation, run tests, generate report                                |
-| `just check`      | `lint` + `test` — run before declaring a task done                                             |
+| Recipe            | Description                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `just test`       | Run unit tests via ctest; defaults to labels `Unit`/`Integration`, excluding `Flaky`/`Network`          |
+| `just lint`       | Lint what you changed: uncommitted, untracked, and commits not yet upstream (`pre_commit.py --changed`) |
+| `just lint-all`   | CI's sweep: every hook over every file. Advisory in CI; locally the fixer hooks rewrite files           |
+| `just format`     | Check code formatting with clang-format (no changes)                                                    |
+| `just format-fix` | Apply clang-format fixes                                                                                |
+| `just analyze`    | Run static analysis (`tools/analyze.py`, default tool clang-tidy)                                       |
+| `just coverage`   | Build with coverage instrumentation, run tests, generate report                                         |
+| `just check`      | `lint` + `test` — run before declaring a task done                                                      |
 
 Override `test` label filters via environment variables or positional args:
 
@@ -130,11 +133,11 @@ just test "Slow" "Network"             # override via positional args (labels, e
 
 ### Run & Deploy
 
-| Recipe        | Description                                                                     |
-| ------------- | ------------------------------------------------------------------------------- |
-| `just run`    | Launch the built `QGroundControl` binary                                        |
-| `just docs`   | Build the VitePress documentation site (`npm run docs:build`)                   |
-| `just docker` | Build inside the Ubuntu Docker container (`deploy/docker/run-docker.sh ubuntu`) |
+| Recipe        | Description                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| `just run`    | Build what changed, then launch; forwards usbipd USB devices on WSL, `WSL_GPU=1` opts into D3D12 |
+| `just docs`   | Build the VitePress documentation site (`npm run docs:build`)                                    |
+| `just docker` | Build inside the Ubuntu Docker container (`deploy/docker/run-docker.sh ubuntu`)                  |
 
 ### Utilities
 
@@ -257,6 +260,25 @@ python3 ./tools/check_deps.py --qt         # Check Qt version
 python3 ./tools/check_deps.py --update     # Update submodules to latest
 ```
 
+### doctor.py
+
+Preflight the host for a build, per recipe. Underlies `just doctor`, which hands it the same Qt
+root, build directory, build type and app name the other recipes use. Read-only: nothing is
+fetched, updated or configured. Pair it with `check_deps.py` for what is *outdated* and
+`setup/install_dependencies` for installing what it reports missing.
+
+```bash
+python3 ./tools/doctor.py                             # Everything; exit 1 if any recipe is blocked
+python3 ./tools/doctor.py --target build              # Only `just build`'s needs decide the exit code
+python3 ./tools/doctor.py --target test -B build -t Debug   # Checks the cache has tests enabled
+python3 ./tools/doctor.py --qt-root ~/Qt/6.11.1/gcc_64      # The Qt `just configure` would be handed
+```
+
+Sections: host tools (git, cmake, ninja, compiler, python), build (Qt in the supported range with
+every REQUIRED component, GStreamer on Linux, a build cache that still matches the host), test
+(ctest, `Qt6::Test`, `BUILD_TESTING=ON` in the cache — Release caches carry no tests), lint
+(pre-commit, clang-tidy and the `build/compile_commands.json` its hook reads).
+
 ### generate_docs.py
 
 Generate API documentation using Doxygen.
@@ -276,19 +298,20 @@ Scripts in `setup/` help configure development environments. They read configura
 `.github/build-config.json` for consistent versioning. `install_dependencies` is a Python package
 (`tools/setup/install_dependencies/`), invoked directly via its `__main__.py`.
 
-| Script                                    | Platform              | Description                                                                   |
-| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
-| `install_dependencies --platform debian`  | Linux (Debian/Ubuntu) | Install build dependencies via apt                                            |
-| `install_dependencies --platform fedora`  | Linux (Fedora/RHEL)   | Install build dependencies via dnf                                            |
-| `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                         |
-| `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                 |
-| `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
-| `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                         |
-| `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
-| `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
-| `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (optional)                |
-| `download_artifacts.py`                   | All                   | Download build artifacts (in `.github/scripts/`)                              |
-| `read_config.py`                          | All                   | Read `.github/build-config.json` (Python, cross-platform)                     |
+| Script                                    | Platform              | Description                                                                            |
+| ----------------------------------------- | --------------------- | -------------------------------------------------------------------------------------- |
+| `install_dependencies --platform debian`  | Linux (Debian/Ubuntu) | Install build dependencies via apt                                                     |
+| `install_dependencies --platform fedora`  | Linux (Fedora/RHEL)   | Install build dependencies via dnf                                                     |
+| `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                                  |
+| `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                          |
+| `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                                |
+| `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                                  |
+| `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI)          |
+| `wsl_usb_attach.py`                       | WSL                   | Forward every usbipd-bound USB device into WSL; repairs stale attachments (`just run`) |
+| `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                                 |
+| `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (optional)                         |
+| `download_artifacts.py`                   | All                   | Download build artifacts (in `.github/scripts/`)                                       |
+| `read_config.py`                          | All                   | Read `.github/build-config.json` (Python, cross-platform)                              |
 
 `install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
 `scripts`, `precommit`, `test`, `ci` (default), `qt`, `coverage`, `dev`, `lint`, `all`.

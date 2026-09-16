@@ -18,17 +18,23 @@ ensure_tools_dir(__file__)
 from common import find_repo_root, get_default_branch_ref, run_captured
 from common.gh_actions import write_github_output as _write_github_output
 from common.gh_actions import write_step_summary as _write_step_summary
+from common.git import run_git
 from common.io import chdir
-from common.logging import log_error, log_info, log_ok, log_warn
+from common.logging import log_error, log_info, log_ok
 
-HOOK_RESULT_RE = re.compile(r"\b(Passed|Failed|Skipped)\b")
+# pre-commit pads each verdict to the right margin with dots, or "(no files to check)";
+# anchoring there keeps words inside --show-diff-on-failure output from counting.
+HOOK_RESULT_RE = re.compile(r"(?:\.{3,}|\))(Passed|Failed|Skipped)$")
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run pre-commit checks.")
     parser.add_argument(
-        "-c", "--changed", action="store_true", help="Run only files changed vs master"
+        "-c",
+        "--changed",
+        action="store_true",
+        help="Run only on files you changed: uncommitted, untracked, and commits not yet upstream",
     )
     parser.add_argument("-i", "--install", action="store_true", help="Install pre-commit hooks")
     parser.add_argument("-u", "--update", action="store_true", help="Update hook versions")
@@ -52,7 +58,9 @@ def strip_ansi(value: str) -> str:
 def summarize_output(output: str) -> tuple[int, int, int]:
     passed = failed = skipped = 0
     for line in output.splitlines():
-        match = HOOK_RESULT_RE.search(line)
+        # --color=always wraps each verdict in escapes, and \b sees the closing
+        # "m" as a word character: match on the stripped line or count nothing.
+        match = HOOK_RESULT_RE.search(strip_ansi(line))
         if not match:
             continue
         state = match.group(1)
@@ -70,18 +78,46 @@ def extract_hook_lines(output: str, *, limit: int = 40) -> list[str]:
     return lines[:limit] or ["No results"]
 
 
+def changed_files() -> list[str]:
+    """Files the developer has touched, relative to the repo root.
+
+    The working tree against HEAD, untracked files, and the commits not yet on
+    the branch's upstream -- or on the default branch when there is no upstream.
+    A from-ref/to-ref range alone misses the first two, and is empty for anyone
+    committing straight to the default branch.
+    """
+    names: list[str] = []
+    for cmd in (
+        ["diff", "--name-only", "HEAD"],
+        ["ls-files", "--others", "--exclude-standard"],
+    ):
+        result = run_git(*cmd)
+        if result.returncode == 0:
+            names.extend(result.stdout.splitlines())
+
+    upstream = run_git("rev-parse", "--abbrev-ref", "@{upstream}")
+    base = upstream.stdout.strip() if upstream.returncode == 0 else get_default_branch_ref()
+    if base:
+        result = run_git("diff", "--name-only", f"{base}...HEAD")
+        if result.returncode == 0:
+            names.extend(result.stdout.splitlines())
+
+    # Deleted files are still named by the diffs; pre-commit rejects them.
+    return sorted({name for name in names if name and Path(name).is_file()})
+
+
 def build_precommit_args(args: argparse.Namespace) -> list[str]:
+    """The pre-commit command line, or [] when --changed finds nothing to lint."""
     result = ["pre-commit", "run", "--show-diff-on-failure", "--color=always"]
-    if args.changed:
-        ref = get_default_branch_ref()
-        if ref:
-            log_info(f"Running on files changed vs {ref}...")
-            result.extend(["--from-ref", ref, "--to-ref", "HEAD"])
-        else:
-            log_warn("Default branch not available, running on all files")
-            result.append("--all-files")
-    else:
+    if not args.changed:
         result.append("--all-files")
+        return result
+    files = changed_files()
+    if not files:
+        return []
+    log_info(f"Running on {len(files)} changed file(s)...")
+    result.append("--files")
+    result.extend(files)
     return result
 
 
@@ -159,6 +195,9 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
 
             command = build_precommit_args(args)
+            if not command:
+                log_ok("No changed files to lint")
+                return 0
             log_info("Running pre-commit checks...")
             print()
             result = run_captured(command)
@@ -189,8 +228,10 @@ def main(argv: list[str] | None = None) -> int:
             if result.returncode != 0:
                 print()
                 log_info("To fix issues locally:")
-                print("  1. Run: pre-commit run --all-files")
-                print("  2. Review and stage changes: git add -u")
+                print(
+                    "  1. Fixer hooks have already rewritten the files they could; review: git diff"
+                )
+                print("  2. Fix what remains by hand, then stage: git add -u")
                 print("  3. Amend your commit: git commit --amend --no-edit")
 
             return result.returncode

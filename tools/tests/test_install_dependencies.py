@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/setup/install_dependencies."""
 
 from __future__ import annotations
@@ -26,12 +25,14 @@ from setup.install_dependencies import (
     get_available_debian_packages,
     get_brew_install_command,
     get_debian_packages,
+    get_dnf_install_command,
     get_fedora_packages,
     get_macos_packages,
     install_just_debian,
     parse_args,
     resolve_package_alternatives,
     run_apt_install_with_retry,
+    run_dnf_install_with_retry,
     validate_extra_packages,
 )
 
@@ -344,6 +345,22 @@ def test_run_apt_install_with_retry_refreshes_index_then_retries() -> None:
             call(get_apt_install_command(["cmake"]), False, sudo=True),
             call(get_apt_update_command(), False, sudo=True),
             call(get_apt_install_command(["cmake"]), False, sudo=True),
+        ]
+    )
+
+
+def test_run_dnf_install_with_retry_forces_metadata_refresh_then_retries() -> None:
+    with patch(
+        "setup.install_dependencies._common.run_command", side_effect=[False, True, True]
+    ) as mock_run:
+        result = run_dnf_install_with_retry(["cmake"], dry_run=False, sudo=True, max_attempts=2)
+
+    assert result is True
+    mock_run.assert_has_calls(
+        [
+            call(get_dnf_install_command(["cmake"]), False, sudo=True),
+            call(["dnf", "makecache", "--refresh"], False, sudo=True),
+            call(get_dnf_install_command(["cmake"]), False, sudo=True),
         ]
     )
 

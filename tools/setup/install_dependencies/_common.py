@@ -148,14 +148,23 @@ def run_dnf_install_with_retry(
     sudo: bool = False,
     max_attempts: int = 2,
 ) -> bool:
-    """Install dnf packages, refreshing metadata between attempts."""
+    """Install dnf packages, refreshing metadata between attempts.
+
+    The common failure is a 404 on a package the mirror has since replaced:
+    cached metadata still names the old NEVRA. ``--refresh`` is what makes
+    makecache actually re-fetch; without it the call is a no-op inside
+    ``metadata_expire`` and the retry fails the same way.
+    """
     for attempt in range(1, max_attempts + 1):
         if run_command(get_dnf_install_command(packages), dry_run, sudo=sudo):
             return True
         if attempt >= max_attempts:
             break
-        print(f"  dnf install failed (attempt {attempt}/{max_attempts}); retrying...")
-        if not run_command(["dnf", "makecache"], dry_run, sudo=sudo):
+        print(
+            f"  dnf install failed (attempt {attempt}/{max_attempts}); "
+            "refreshing metadata and retrying..."
+        )
+        if not run_command(["dnf", "makecache", "--refresh"], dry_run, sudo=sudo):
             return False
     return False
 
@@ -278,7 +287,7 @@ def _set_env_var_ci(name: str, value: str) -> None:
 
 def _set_env_var_local(name: str, value: str) -> None:
     """Set a machine-level environment variable via Windows registry."""
-    if not is_windows():
+    if sys.platform != "win32":  # a literal check, so pyright can see winreg's Windows-only API
         raise RuntimeError("Local env var persistence is only supported on Windows")
     import winreg
 
@@ -303,7 +312,7 @@ def add_to_path(path_entry: str) -> None:
             with open(github_path, "a", encoding="utf-8") as f:
                 f.write(f"{path_entry}\n")
     else:
-        if not is_windows():
+        if sys.platform != "win32":  # literal check: see _set_env_var_local
             raise RuntimeError("Local PATH persistence is only supported on Windows")
         import winreg
 

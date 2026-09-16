@@ -61,7 +61,8 @@ The `just` recipes are the canonical workflow — see [tools/README.md](tools/RE
 just configure          # CMake configure (pulls submodules first)
 just build              # incremental build; uses all cores (override with JOBS=N)
 just test               # ctest, LABELS="Unit|Integration" EXCLUDE="Flaky|Network"
-just lint               # fast pre-commit gate (clang-format, ruff, qmllint, ...)
+just doctor             # preflight the host per recipe; read-only, exit 1 where a recipe is blocked
+just lint               # pre-commit over what you changed (uncommitted, untracked, unpushed)
 just check              # lint + test (run before declaring done)
 just format-fix         # apply clang-format / ruff-format
 just info               # print resolved versions (Qt, CMake, GStreamer)
@@ -76,7 +77,7 @@ just info               # print resolved versions (Qt, CMake, GStreamer)
 Before considering a change complete:
 
 1. `just build` succeeds.
-2. `just lint` (or `pre-commit run --all-files` for the full sweep) passes.
+2. `just lint` passes (`just lint-all` is CI's advisory all-files sweep; it rewrites files).
 3. Relevant tests pass (`ctest -R <name>` for the touched area; full `-L Unit` on the final pass).
 4. Commit message follows Conventional Commits (below).
 

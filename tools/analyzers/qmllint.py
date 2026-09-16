@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import shutil
 from typing import TYPE_CHECKING, ClassVar
 
 from common.analyzer import AnalysisResult, AnalyzerBase
+from common.deps import find_qt_tool
 from common.logging import log_info, log_warn
 from common.proc import run_captured
 
@@ -18,11 +18,13 @@ class QmlLintAnalyzer(AnalyzerBase):
 
     name: ClassVar[str] = "qmllint"
     install_hint: ClassVar[str] = (
-        "Install with: Qt SDK or 'sudo apt install qt6-declarative-dev-tools'"
+        "Install with: Qt SDK, 'sudo apt install qt6-declarative-dev-tools' "
+        "or 'sudo dnf install qt6-qtdeclarative-devel'"
     )
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if shutil.which("qmllint") is None:
+        qmllint = find_qt_tool("qmllint")
+        if qmllint is None:
             log_warn("qmllint not found - skipping")
             log_info(self.install_hint)
             return AnalysisResult(tool=self.name, passed=True, output="Skipped")
@@ -38,7 +40,7 @@ class QmlLintAnalyzer(AnalyzerBase):
         all_output: list[str] = []
 
         for file in files:
-            result = run_captured(["qmllint", "--bare", str(file)])
+            result = run_captured([qmllint, "--bare", str(file)])
 
             output = result.stdout + result.stderr
             if output.strip():

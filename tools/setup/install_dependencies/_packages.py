@@ -196,6 +196,11 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "make",
         "ccache",
         "cmake",
+        # `just lint` and `just format`: pre-commit's system hooks run clang-tidy
+        # and clazy from the host, and clang-format comes with clang-tools-extra.
+        "clang-tools-extra",
+        "clazy",
+        "pre-commit",
         "cppcheck",
         "file",
         "gdb",
@@ -245,6 +250,34 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "libunwind-devel",
         "mesa-libEGL-devel",
         "mesa-libGL-devel",
+        # Qt itself, unlike the Debian list: Fedora tracks current Qt, so its
+        # packages sit inside the supported range (custom/cmake/CustomOverrides.cmake
+        # widens the maximum for exactly this), where Ubuntu's are years behind.
+        # One -devel per find_package(Qt6 ...) component in the root CMakeLists.txt;
+        # dnf pulls their dependencies (quicktimeline, opengl, ...).
+        "qt6-qtbase-devel",
+        # LocationPrivate and MultimediaQuickPrivate pull Qt6CorePrivate/GuiPrivate,
+        # which Fedora splits out of qtbase-devel.
+        "qt6-qtbase-private-devel",
+        "qt6-qtdeclarative-devel",
+        "qt6-qttools-devel",
+        "qt6-linguist",
+        "qt6-qtgraphs-devel",
+        "qt6-qthttpserver-devel",
+        "qt6-qtlocation-devel",
+        "qt6-qtmultimedia-devel",
+        "qt6-qtpositioning-devel",
+        "qt6-qtquick3d-devel",
+        "qt6-qtscxml-devel",
+        "qt6-qtsensors-devel",
+        "qt6-qtserialport-devel",
+        "qt6-qtshadertools-devel",
+        "qt6-qtspeech-devel",
+        "qt6-qtsvg-devel",
+        "qt6-qtconnectivity-devel",
+        "qt6-qtwayland-devel",
+        "qt6-qtwebsockets-devel",
+        "qt6-qtimageformats",
     ],
     "gstreamer": [
         "gstreamer1-devel",
@@ -265,6 +298,10 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
     ],
     "audio": [
         "pulseaudio-libs-devel",
+        # Voice alerts: Qt's preferred Linux speech engine is speechd, which needs the
+        # daemon and a synthesizer module -- without the module it starts and says nothing.
+        "speech-dispatcher",
+        "speech-dispatcher-espeak-ng",
     ],
     "misc": [
         "vulkan-loader-devel",
