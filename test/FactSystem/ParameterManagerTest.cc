@@ -45,9 +45,12 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     QCOMPARE(arguments.at(0).toBool(), true);
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
-    // We should get progress bar updates during load
+    // We should get progress bar updates during load. The first one arrives only after the
+    // initial connect sequence (capabilities, protocol version, component metadata and its
+    // download) has run, which a sanitizer build on a loaded runner does not finish in the
+    // short timeout.
     QSignalSpy spyProgress(vehicle->parameterManager(), &ParameterManager::loadProgressChanged);
-    QVERIFY_SIGNAL_WAIT(spyProgress, TestTimeout::shortMs());
+    QVERIFY_SIGNAL_WAIT(spyProgress, TestTimeout::mediumMs());
     arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
@@ -118,8 +121,9 @@ void ParameterManagerTest::_requestListMissingParamFail()
     QVERIFY(vehicle);
     QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
     QSignalSpy spyProgress(vehicle->parameterManager(), &ParameterManager::loadProgressChanged);
-    // We will get progress bar updates, since it will fail after getting partially through the request
-    QVERIFY_SIGNAL_WAIT(spyProgress, TestTimeout::shortMs());
+    // We will get progress bar updates, since it will fail after getting partially through the
+    // request; the first follows the whole initial connect sequence, as in _noFailureWorker.
+    QVERIFY_SIGNAL_WAIT(spyProgress, TestTimeout::mediumMs());
     arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
