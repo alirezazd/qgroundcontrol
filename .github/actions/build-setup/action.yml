@@ -61,6 +61,9 @@ inputs:
     default: ""
 
 outputs:
+  app_name:
+    description: 'Application name every deliverable is named after (QGC_APP_NAME; also exported to env)'
+    value: ${{ steps.app-name.outputs.app_name }}
   qt_modules:
     description: Qt modules used for this build
     value: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
@@ -132,6 +135,14 @@ runs:
             exit 1
           fi
         fi
+
+    # Every deliverable is named after QGC_APP_NAME (a custom overlay renames
+    # the project), so the workflows take the name from here rather than
+    # assuming "QGroundControl": QGC_APP_NAME in env for the rest of the job.
+    - name: Export application name
+      id: app-name
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/app_name.py" --github
 
     - name: Build prerequisites
       id: prereq

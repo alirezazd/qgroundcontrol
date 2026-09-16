@@ -90,7 +90,6 @@ jobs:
 
     env:
       BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
-      PACKAGE: QGroundControl
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -201,7 +200,8 @@ jobs:
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/android_build_retry.py" \
             --build-dir "${{ runner.temp }}/build" \
-            --build-type "${BUILD_TYPE}"
+            --build-type "${BUILD_TYPE}" \
+            --settings-name "android-${QGC_APP_NAME}-deployment-settings.json"
 
       # `failure()` is required: build's continue-on-error makes outcome alone insufficient.
       - name: Annotate emulator build retry failure
@@ -219,7 +219,7 @@ jobs:
             ${{ runner.temp }}/build/CMakeFiles/CMakeOutput.log
             ${{ runner.temp }}/build/CMakeFiles/CMakeError.log
             ${{ runner.temp }}/build/.ninja_log
-            ${{ runner.temp }}/build/android-QGroundControl-deployment-settings.json
+            ${{ runner.temp }}/build/android-${{ env.QGC_APP_NAME }}-deployment-settings.json
           if-no-files-found: ignore
           retention-days: 7
 
@@ -245,13 +245,13 @@ jobs:
             ls -la "${APK_DIR}" 2>/dev/null || echo "Build directory does not exist"
             exit 1
           fi
-          cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
+          cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${QGC_APP_NAME}.apk"
 
       - name: Emulator Boot Test
         if: ${{ matrix.emulator }}
         uses: ./.github/actions/android-emulator-test
         with:
-          apk-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          apk-path: ${{ runner.temp }}/build/${{ env.QGC_APP_NAME }}.apk
           package: org.mavlink.qgroundcontrol
           android-platform: ${{ steps.setup.outputs.android_platform }}
           qt-version: ${{ steps.setup.outputs.qt_version }}
@@ -262,9 +262,9 @@ jobs:
         if: ${{ !matrix.emulator }}
         uses: ./.github/actions/attest-and-upload
         with:
-          artifact-name: ${{ env.PACKAGE }}.apk
-          package-name: ${{ format('{0}-{1}', env.PACKAGE, matrix.host) }}
-          subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}
+          artifact-name: ${{ env.QGC_APP_NAME }}.apk
+          package-name: ${{ format('{0}-{1}', env.QGC_APP_NAME, matrix.host) }}
+          subject-name: ${{ env.QGC_APP_NAME }}-${{ matrix.host }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -289,7 +289,7 @@ jobs:
         if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
         uses: ./.github/actions/playstore
         with:
-          artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          artifact: ${{ runner.temp }}/build/${{ env.QGC_APP_NAME }}.apk
           service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
           track: ${{ steps.playstore_rollout.outputs.track }}
           status: ${{ steps.playstore_rollout.outputs.status }}

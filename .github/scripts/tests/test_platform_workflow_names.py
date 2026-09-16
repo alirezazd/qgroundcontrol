@@ -42,8 +42,10 @@ def _workflow_name(path: Path) -> str:
 
 
 def _platform_workflows() -> list[str]:
-    raw = json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8")).get("build", {}).get(
-        "platform_workflows", ""
+    raw = (
+        json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8"))
+        .get("build", {})
+        .get("platform_workflows", "")
     )
     assert raw, "platform_workflows missing from build-config.json"
     return [n.strip() for n in raw.split(",") if n.strip()]
@@ -99,23 +101,24 @@ def test_build_results_trigger_matches_build_config() -> None:
         pytest.fail(" / ".join(msg_parts))
 
 
-def test_release_wait_for_builds_lists_match_platforms() -> None:
+def test_release_wait_for_builds_reads_platforms_from_build_config() -> None:
+    """release.yml takes the platform list from build-config.json at run time.
+
+    So there is no second copy to drift; this pins that the wait step really
+    does read `build.platform_workflows` rather than naming workflows itself.
+    """
     if not RELEASE_YML.exists() or not BUILD_CONFIG_JSON.exists():
         pytest.skip("release.yml or build-config.json not in checkout")
     doc = yaml.safe_load(RELEASE_YML.read_text(encoding="utf-8"))
     jobs = doc.get("jobs") or {}
     wait = jobs.get("wait-for-builds") or {}
-    steps = wait.get("steps") or []
-    names_block: str | None = None
-    for step in steps:
-        with_ = step.get("with") or {}
-        if "workflow-names" in with_:
-            names_block = str(with_["workflow-names"])
-            break
-    assert names_block is not None, "wait-for-builds step missing workflow-names"
-    listed = {line.strip() for line in names_block.splitlines() if line.strip()}
-    expected = set(_platform_workflows())
-    assert listed == expected, (
-        f"release.yml wait-for-builds workflow-names {sorted(listed)} != "
-        f"build-config.json platform_workflows {sorted(expected)}"
+    runs = [str(step.get("run") or "") for step in wait.get("steps") or []]
+    waiting = [run for run in runs if "wait_platform_runs.py" in run]
+    assert waiting, "wait-for-builds has no step running wait_platform_runs.py"
+    assert "build.platform_workflows" in waiting[0], (
+        "the wait step must source its workflow list from build-config.json"
     )
+    for name in _platform_workflows():
+        assert name not in waiting[0], (
+            f"platform workflow {name!r} is named literally in release.yml"
+        )

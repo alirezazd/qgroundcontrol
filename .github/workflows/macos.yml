@@ -97,7 +97,7 @@ jobs:
       - name: Verify dev build executable
         uses: ./.github/actions/verify-executable
         with:
-          binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
+          binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.QGC_APP_NAME }}.app/Contents/MacOS/${{ env.QGC_APP_NAME }}
           build-dir: ${{ runner.temp }}/build
           expect-archs: x86_64h arm64
 
@@ -123,24 +123,24 @@ jobs:
       - name: Mount DMG
         working-directory: ${{ runner.temp }}/build
         run: |
-          if ! hdiutil attach QGroundControl.dmg; then
+          if ! hdiutil attach "${QGC_APP_NAME}.dmg"; then
             echo "::error::Failed to mount DMG"
-            ls -la QGroundControl.dmg 2>/dev/null || echo "DMG file not found"
+            ls -la "${QGC_APP_NAME}.dmg" 2>/dev/null || echo "DMG file not found"
             exit 1
           fi
 
       - name: Verify DMG executable
         uses: ./.github/actions/verify-executable
         with:
-          binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl
+          binary-path: /Volumes/${{ env.QGC_APP_NAME }}/${{ env.QGC_APP_NAME }}.app/Contents/MacOS/${{ env.QGC_APP_NAME }}
           expect-archs: x86_64h arm64
 
       - name: Attest and Upload
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/attest-and-upload
         with:
-          artifact-name: QGroundControl.dmg
-          package-name: QGroundControl
+          artifact-name: ${{ env.QGC_APP_NAME }}.dmg
+          package-name: ${{ env.QGC_APP_NAME }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

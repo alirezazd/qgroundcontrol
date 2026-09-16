@@ -1,7 +1,21 @@
+# A release is a tag the tree agrees with: QGC derives its version from
+# `git describe`, so the tag, the version every binary reports and the release
+# name all have to be the same thing, and this workflow refuses to publish when
+# they are not. The same tag push starts the Linux, Windows, MacOS and Android
+# workflows -- the builds every push already goes through, tests included --
+# and what they attest and upload is what gets published, with checksums.
+#
+# Cut one:   git tag v1.2.3 && git push origin v1.2.3
+# Prerelease: git tag v1.2.3-rc1 && git push origin v1.2.3-rc1
 name: Release
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      # Both the plain form and suffixed prereleases; which is which is
+      # decided below, from the tag rather than from who pushed it.
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,17 +26,17 @@ permissions:
   contents: read
 
 jobs:
-  semantic-release:
-    name: Semantic Release
+  # The gate. A tag naming a version the tree does not produce would ship
+  # binaries that report something else, and the mismatch would only ever be
+  # noticed from a vehicle in the field.
+  gate:
+    name: Tag agrees with the tree
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write       # @semantic-release/git pushes CHANGELOG.md
-      issues: write         # @semantic-release/github comments on closed issues
-      pull-requests: write  # @semantic-release/github comments on closed PRs
+    timeout-minutes: 10
     outputs:
-      new_release: ${{ steps.release.outputs.new_release }}
-      version: ${{ steps.release.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      app_name: ${{ steps.app.outputs.app_name }}
 
     steps:
       - name: Harden Runner
@@ -30,75 +44,85 @@ jobs:
         with:
           egress-policy: audit
 
+      # Whole history: the version is what `git describe` derives from it,
+      # exactly as cmake/modules/Git.cmake does at configure time.
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 'lts/*'
+      - name: Application name
+        id: app
+        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/app_name.py" --github
 
-      - name: Run semantic-release
-        id: release
+      - name: Tag agrees with the generated version
+        id: version
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          ./tools/release.py --install
-          # @semantic-release/exec verifyReleaseCmd writes .release-version
-          # iff a release was actually published. Reading from a file is
-          # immune to log-format drift across SR major versions.
-          rm -f .release-version
-          ./tools/release.py --run
-
-          if [[ -f .release-version ]]; then
-            version=$(tr -d '[:space:]' < .release-version)
-            if [[ -z "${version}" ]]; then
-              echo "::error::semantic-release wrote an empty version file"
-              exit 1
-            fi
-            echo "new_release=true" >> "${GITHUB_OUTPUT}"
-            echo "version=${version}" >> "${GITHUB_OUTPUT}"
-            echo "New release: v${version}"
-          else
-            echo "new_release=false" >> "${GITHUB_OUTPUT}"
-            echo "No new release"
+          described="$(git describe --always --tags)"
+          if [ "$described" != "$TAG" ]; then
+            echo "::error::tag $TAG is not what the tree reports: git describe says $described" >&2
+            exit 1
           fi
+          case "$TAG" in
+            *-*) prerelease=true ;;
+            *)   prerelease=false ;;
+          esac
+          printf 'version=%s\n' "${TAG#v}" >> "$GITHUB_OUTPUT"
+          printf 'prerelease=%s\n' "$prerelease" >> "$GITHUB_OUTPUT"
+          echo "$TAG (prerelease=$prerelease)"
 
+  # The tag push started the four platform workflows on its own; this job
+  # only waits for them and learns which runs to collect from.
   wait-for-builds:
-    name: Wait for Platform Builds
-    needs: semantic-release
-    if: needs.semantic-release.outputs.new_release == 'true'
+    name: Wait for platform builds
+    needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:
-      actions: read  # wait-for-workflows-action polls workflow runs
+      actions: read
+    outputs:
+      runs: ${{ steps.wait.outputs.runs }}
 
     steps:
-      - name: Wait for builds to complete
-        uses: int128/wait-for-workflows-action@v1
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
         with:
-          workflow-names: |
-            Linux
-            Windows
-            MacOS
-            Android
-          timeout-minutes: 170
-          poll-interval-minutes: 5
+          egress-policy: audit
 
-  upload-artifacts:
-    name: Upload Release Artifacts
-    needs: [semantic-release, wait-for-builds]
-    if: needs.semantic-release.outputs.new_release == 'true'
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # The platform list is build-config.json's, the same one build-results.yml
+      # keys on, so a renamed workflow cannot leave a release short of a platform.
+      - name: Wait
+        id: wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          workflows="$(python3 "${GITHUB_WORKSPACE}/tools/setup/read_config.py" \
+            --get build.platform_workflows | tr ',' ' ')"
+          # shellcheck disable=SC2086  # a word list, by construction
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/wait_platform_runs.py" \
+            --repo "$GITHUB_REPOSITORY" --sha "$SHA" \
+            --workflows $workflows \
+            --timeout-minutes 170 --poll-seconds 120
+
+  publish:
+    name: Publish
+    needs: [gate, wait-for-builds]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
+      contents: write   # gh release create
+      actions: read     # gh run download
 
     steps:
       - name: Harden Runner
@@ -112,121 +136,116 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: artifacts
-          merge-multiple: true
-
-      - name: List artifacts
-        run: find artifacts -type f | head -50 || echo "No artifacts found"
-
-      - name: Resolve artifact paths
-        id: paths
-        shell: bash
-        run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py" \
-            --build-dir artifacts \
-            --match "appimage=QGroundControl*.AppImage" \
-            --match "apk=*.apk" \
-            --match "dmg=*.dmg" \
-            --match "exe=QGroundControl*.exe"
-
-      # Source-tree SBOM is kept as a release artifact for source traceability,
-      # but it is NOT used as the attestation evidence (per-platform SBOMs are).
-      - name: Generate source SBOM (SPDX)
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: spdx-json
-          output-file: sbom-source.spdx.json
-          artifact-name: sbom-source-spdx
-
-      - name: Generate source SBOM (CycloneDX)
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: cyclonedx-json
-          output-file: sbom-source.cdx.json
-          artifact-name: sbom-source-cyclonedx
-
-      - name: Extract AppImage contents
-        if: steps.paths.outputs.appimage != ''
-        shell: bash
+      - name: Download platform artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNS: ${{ needs.wait-for-builds.outputs.runs }}
         run: |
           set -euo pipefail
-          mkdir -p extracted/linux
-          cp "${STEPS_PATHS_OUTPUTS_APPIMAGE}" extracted/linux/qgc.AppImage
-          chmod +x extracted/linux/qgc.AppImage
-          (cd extracted/linux && ./qgc.AppImage --appimage-extract >/dev/null)
-          rm extracted/linux/qgc.AppImage
+          echo "$RUNS" | python3 -c 'import json,sys; [print(k, v) for k, v in json.load(sys.stdin).items()]' |
+          while read -r workflow run_id; do
+            echo "== $workflow (run $run_id)"
+            gh run download "$run_id" --dir "artifacts/$workflow"
+          done
+          find artifacts -type f | sort
+
+      # One flat list, named as the builds named them: the AppImages and the
+      # Windows installers carry their architecture, the DMG is universal, the
+      # APK covers every ABI the build targets. Anything the platforms did not
+      # produce is simply absent rather than a failure here: the wait job has
+      # already established that every platform build succeeded.
+      - name: Stage release assets
         env:
-          STEPS_PATHS_OUTPUTS_APPIMAGE: ${{ steps.paths.outputs.appimage }}
-
-      - name: Attest Linux AppImage
-        id: attest-linux
-        if: steps.paths.outputs.appimage != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.appimage }}
-          subject-name: linux-appimage
-          scan-path: extracted/linux/squashfs-root
-        continue-on-error: true
-
-      - name: Extract APK contents
-        if: steps.paths.outputs.apk != ''
-        shell: bash
+          APP: ${{ needs.gate.outputs.app_name }}
         run: |
           set -euo pipefail
-          mkdir -p extracted/android
-          unzip -q -o "${STEPS_PATHS_OUTPUTS_APK}" -d extracted/android
+          mkdir -p dist
+          stage() {  # stage <glob> [dest-name]
+            local found
+            found="$(find artifacts -type f -name "$1" | sort | head -n1)"
+            if [ -z "$found" ]; then
+              echo "::warning::no asset matched $1"
+              return 0
+            fi
+            cp "$found" "dist/${2:-$(basename "$found")}"
+          }
+          stage "${APP}-x86_64.AppImage"
+          stage "${APP}-aarch64.AppImage"
+          stage "${APP}-installer-AMD64.exe"
+          stage "${APP}-installer-ARM64.exe"
+          stage "${APP}.dmg"
+          stage "${APP}.apk"
+          if [ -z "$(ls -A dist)" ]; then
+            echo "::error::no release assets found among the platform artifacts" >&2
+            exit 1
+          fi
+          ( cd dist && sha256sum ./* > SHA256SUMS )
+          ls -l dist
+
+      # The asset table first, then GitHub's generated notes for the commits
+      # since the previous release. Anchored on the release this one follows
+      # so the compare link is right even when tags are later moved.
+      - name: Compose release notes
         env:
-          STEPS_PATHS_OUTPUTS_APK: ${{ steps.paths.outputs.apk }}
+          GH_TOKEN: ${{ github.token }}
+          APP: ${{ needs.gate.outputs.app_name }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          python3 - "$APP" > notes.md <<'PY'
+          import pathlib
+          import sys
 
-      - name: Attest Android APK
-        id: attest-android
-        if: steps.paths.outputs.apk != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.apk }}
-          subject-name: android-apk
-          scan-path: extracted/android
-        continue-on-error: true
+          app = sys.argv[1]
+          present = {p.name for p in pathlib.Path("dist").iterdir()}
+          rows = [
+              (f"{app}-installer-AMD64.exe", "Windows, x64 -- run the installer"),
+              (f"{app}-installer-ARM64.exe", "Windows on ARM -- run the installer"),
+              (f"{app}.dmg", "macOS, universal (Apple silicon and Intel) -- unsigned: right-click, Open"),
+              (f"{app}-x86_64.AppImage", "Linux, x86_64 -- `chmod +x`, then run"),
+              (f"{app}-aarch64.AppImage", "Linux, aarch64 -- `chmod +x`, then run"),
+              (f"{app}.apk", "Android -- sideload; signed with the build's key"),
+              ("SHA256SUMS", "checksums for everything above"),
+          ]
+          print("## Downloads")
+          print()
+          print("| asset | what it is |")
+          print("| --- | --- |")
+          for name, what in rows:
+              if name in present:
+                  print(f"| `{name}` | {what} |")
+          print()
+          print("Verify a download with `sha256sum -c SHA256SUMS --ignore-missing`.")
+          PY
 
-      # DMG/EXE: Linux runner can't deeply extract these; Syft scans the file
-      # best-effort. For full coverage, mac/Windows builds should emit their
-      # own SBOM as an artifact (followup).
-      - name: Attest macOS DMG
-        id: attest-macos
-        if: steps.paths.outputs.dmg != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.dmg }}
-          subject-name: macos-dmg
-        continue-on-error: true
+          previous="$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 \
+            --json tagName --jq '.[0].tagName // empty')"
+          args=(-f tag_name="$TAG")
+          if [ -n "$previous" ]; then
+            args+=(-f previous_tag_name="$previous")
+          fi
+          printf '\n' >> notes.md
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            "${args[@]}" --jq .body >> notes.md
+          if [ -n "$previous" ]; then
+            previous_commit="$(git rev-parse "$previous^{commit}")"
+            sed -i "s|/compare/$previous\.\.\.|/compare/$previous_commit...|" notes.md
+          fi
+          cat notes.md
 
-      - name: Attest Windows EXE
-        id: attest-windows
-        if: steps.paths.outputs.exe != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.exe }}
-          subject-name: windows-exe
-        continue-on-error: true
-
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: v${{ needs.semantic-release.outputs.version }}
-          files: |
-            artifacts/**/*.AppImage
-            artifacts/**/*.dmg
-            artifacts/**/*.exe
-            artifacts/**/*.apk
-            sbom-source.spdx.json
-            sbom-source.cdx.json
-            ${{ steps.attest-linux.outputs.sbom-path }}
-            ${{ steps.attest-android.outputs.sbom-path }}
-            ${{ steps.attest-macos.outputs.sbom-path }}
-            ${{ steps.attest-windows.outputs.sbom-path }}
-          fail_on_unmatched_files: false
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          APP: ${{ needs.gate.outputs.app_name }}
+          PRERELEASE: ${{ needs.gate.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          # Titled explicitly: without it the release is published nameless
+          # rather than falling back to the tag.
+          args=(--title "$APP $TAG" --notes-file notes.md --verify-tag)
+          if [ "$PRERELEASE" = true ]; then
+            args+=(--prerelease)
+          fi
+          gh release create "$TAG" "${args[@]}" dist/*
+          echo "published: $(gh release view "$TAG" --json url --jq .url)"

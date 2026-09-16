@@ -62,17 +62,18 @@ def collect_build_artifacts(out_dir: Path, build_dir: Path, boot_log: Path | Non
     if boot_log is not None:
         _copy_if_exists(boot_log, out_dir / boot_log.name)
 
-    for name in (
-        "qgc-build.log",
-        "qgc-build-retry.log",
-        "android-QGroundControl-deployment-settings.json",
-    ):
+    for name in ("qgc-build.log", "qgc-build-retry.log"):
         _copy_if_exists(build_dir / name, out_dir / name)
+    # Named after the app (QGC_APP_NAME), so found by pattern rather than assumed.
+    settings = out_dir / "android-QGroundControl-deployment-settings.json"
+    for candidate in sorted(build_dir.glob("android-*-deployment-settings.json")):
+        settings = out_dir / candidate.name
+        _copy_if_exists(candidate, settings)
+        break
 
     # Pretty-print the deployment-settings JSON for human review; keep going on parse error.
-    settings = out_dir / "android-QGroundControl-deployment-settings.json"
-    pretty = out_dir / "android-QGroundControl-deployment-settings.pretty.json"
-    error = out_dir / "android-QGroundControl-deployment-settings.error.txt"
+    pretty = settings.with_name(settings.name.replace(".json", ".pretty.json"))
+    error = settings.with_name(settings.name.replace(".json", ".error.txt"))
     if settings.exists():
         try:
             data = json.loads(settings.read_text(encoding="utf-8"))

@@ -51,7 +51,7 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 | `analysis.yml` | Static analysis |
 | `codeql.yml` | CodeQL security scanning |
 | `pr-checks.yml` | PR validation checks |
-| `release.yml` | Release automation |
+| `release.yml` | Publish a GitHub release from a `vX.Y.Z` tag: gates the tag against `git describe`, waits for the four platform workflows of that commit, stages their artifacts with `SHA256SUMS` (see [Cutting a release](#cutting-a-release)) |
 | `docs.yml`, `doxygen.yml` | Documentation deployment |
 | `cache-cleanup.yml`, `cache-cleanup-pr.yml`, `_cache-cleanup.yml` | Cache maintenance (reusable + scheduled + PR-triggered) |
 | `crowdin.yml`, `lupdate.yml` | Translation workflows |
@@ -188,3 +188,30 @@ Run the full set the same way CI does (also covers `tools/`):
 ```bash
 pytest -q tools/tests .github/scripts/tests
 ```
+
+## Cutting a release
+
+Releases are tag-driven and mirror the firmware repository's flow: a tag is a claim the tree
+makes about itself, and the workflow refuses to publish when the two disagree.
+
+```bash
+git tag v1.2.3 && git push origin v1.2.3          # release
+git tag v1.2.3-rc1 && git push origin v1.2.3-rc1  # prerelease (any `-suffix`)
+```
+
+What happens on the tag push:
+
+1. `linux.yml`, `windows.yml`, `macos.yml` and `android.yml` build the tagged commit exactly as
+   they build every push, tests included, and upload their attested artifacts. Every artifact is
+   named after `QGC_APP_NAME` (`.github/scripts/app_name.py` reads it from the custom overlay, and
+   `build-setup` exports it), so a custom build ships under its own name.
+2. `release.yml` checks that `git describe --tags` at the tag *is* the tag -- that is the version
+   `cmake/modules/Git.cmake` compiles in -- then waits for the four platform runs of that commit
+   (`wait_platform_runs.py`, failing fast if any of them fails), downloads their artifacts, stages
+   the installers/AppImages/DMG/APK with `SHA256SUMS`, and publishes the release with an asset
+   table followed by GitHub's generated notes since the previous release. A suffixed tag becomes a
+   prerelease.
+
+Without signing secrets the macOS DMG is unsigned (Gatekeeper: right-click, Open) and the APK is
+signed with a per-build debug key; Windows and Linux need nothing. Older releases are kept: an
+installer from an earlier version stays a valid download.
