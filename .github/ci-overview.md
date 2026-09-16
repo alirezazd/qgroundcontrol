@@ -212,6 +212,10 @@ What happens on the tag push:
    table followed by GitHub's generated notes since the previous release. A suffixed tag becomes a
    prerelease.
 
-Without signing secrets the macOS DMG is unsigned (Gatekeeper: right-click, Open) and the APK is
-signed with a per-build debug key; Windows and Linux need nothing. Older releases are kept: an
-installer from an earlier version stays a valid download.
+The APK is signed with the release keystore at `deploy/android/android_release.keystore` (alias
+`QGCAndroidKeyStore`, password in the `ANDROID_KEYSTORE_PASSWORD` secret), so each release installs
+over the previous one; without the secret, `android.yml` falls back to a per-build debug key that
+Android refuses to update across. Never regenerate that keystore: a release signed with a different
+key cannot update an installed one. The macOS DMG is unsigned unless the `MACOS_*` secrets exist
+(Gatekeeper: System Settings, Privacy & Security, Open Anyway); Windows and Linux need nothing.
+Older releases are kept: an installer from an earlier version stays a valid download.

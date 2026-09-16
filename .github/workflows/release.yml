@@ -201,10 +201,10 @@ jobs:
           rows = [
               (f"{app}-installer-AMD64.exe", "Windows, x64 -- run the installer"),
               (f"{app}-installer-ARM64.exe", "Windows on ARM -- run the installer"),
-              (f"{app}.dmg", "macOS, universal (Apple silicon and Intel) -- unsigned: right-click, Open"),
+              (f"{app}.dmg", "macOS, universal (Apple silicon and Intel) -- unsigned: System Settings, Privacy & Security, Open Anyway"),
               (f"{app}-x86_64.AppImage", "Linux, x86_64 -- `chmod +x`, then run"),
               (f"{app}-aarch64.AppImage", "Linux, aarch64 -- `chmod +x`, then run"),
-              (f"{app}.apk", "Android -- sideload; signed with the build's key"),
+              (f"{app}.apk", "Android -- sideload; installs over earlier releases"),
               ("SHA256SUMS", "checksums for everything above"),
           ]
           print("## Downloads")
