@@ -12,6 +12,7 @@ public:
     RavenFirmwarePluginFactory();
 
     QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses() const final;
+    QList<QGCMAVLink::VehicleClass_t> supportedVehicleClasses() const final;
     FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
 
 private:

@@ -28,8 +28,8 @@
             "name": "offlineEditingFirmwareClass",
             "shortDesc": "Offline editing firmware class",
             "type": "uint32",
-            "enumStrings": "ArduPilot,PX4 Pro,MAVLink",
-            "enumValues": "3,12,0",
+            "enumStrings": "ArduPilot,PX4 Pro,MAVLink,32Raven",
+            "enumValues": "3,12,0,200",
             "default": 12,
             "label": "Offline editing firmware class"
         },

@@ -26,6 +26,12 @@ public:
 
     QGCOptions* options() override;
 
+    // The firmware and vehicle type are not questions here (see
+    // adjustSettingMetaData), so the first-run prompt keeps only the units.
+    bool showInitialSetupVehiclePreferences() const override { return false; }
+
+    void adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool& userVisible) override;
+
 private:
     RavenOptions* _options = nullptr;
 };
