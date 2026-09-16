@@ -216,8 +216,12 @@ What happens on the tag push:
    `cmake/modules/Git.cmake` compiles in -- then waits for the tag's four platform runs
    (`wait_platform_runs.py`, failing fast if any of them fails), downloads their artifacts, stages
    the installers/AppImages/DMG/APK with `SHA256SUMS`, and publishes the release with an asset
-   table followed by GitHub's generated notes since the previous release. A suffixed tag becomes a
-   prerelease.
+   table followed by GitHub's generated notes since the nearest earlier tag. A suffixed tag becomes
+   a prerelease.
+3. A full release then removes every earlier release (prereleases included; the tags stay), except
+   versions listed in the `RELEASE_KEEP` repository variable (`gh variable set RELEASE_KEEP --body
+   "v1.0.0 v1.2.0"`), so the releases page holds one version. A prerelease removes nothing, which
+   keeps `releases/latest` pointing at a full release.
 
 The APK is signed with the release keystore at `deploy/android/android_release.keystore` (alias
 `QGCAndroidKeyStore`, password in the `ANDROID_KEYSTORE_PASSWORD` secret), so each release installs

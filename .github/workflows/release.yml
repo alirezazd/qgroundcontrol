@@ -7,6 +7,11 @@
 #
 # Cut one:   git tag v1.2.3 && git push origin v1.2.3
 # Prerelease: git tag v1.2.3-rc1 && git push origin v1.2.3-rc1
+#
+# One release is kept: a full release replaces every earlier one once it is
+# published (their tags stay), except versions named in the RELEASE_KEEP
+# repository variable. A prerelease removes nothing, so `latest` always
+# resolves to a full release.
 name: Release
 
 on:
@@ -186,8 +191,9 @@ jobs:
           ls -l dist
 
       # The asset table first, then GitHub's generated notes for the commits
-      # since the previous release. Anchored on the release this one follows
-      # so the compare link is right even when tags are later moved.
+      # since the previous version. That is the nearest tag behind this one
+      # (a full release looks past prereleases), not the newest published
+      # release: earlier releases are removed below, their tags are not.
       - name: Compose release notes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -221,8 +227,12 @@ jobs:
           print("Verify a download with `sha256sum -c SHA256SUMS --ignore-missing`.")
           PY
 
-          previous="$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 \
-            --json tagName --jq '.[0].tagName // empty')"
+          exclude=()
+          case "$TAG" in
+            *-*) ;;
+            *)   exclude=(--exclude 'v*-*') ;;
+          esac
+          previous="$(git describe --tags --abbrev=0 --match 'v[0-9]*' "${exclude[@]}" "$TAG^" 2>/dev/null || true)"
           args=(-f tag_name="$TAG")
           if [ -n "$previous" ]; then
             args+=(-f previous_tag_name="$previous")
@@ -230,10 +240,6 @@ jobs:
           printf '\n' >> notes.md
           gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
             "${args[@]}" --jq .body >> notes.md
-          if [ -n "$previous" ]; then
-            previous_commit="$(git rev-parse "$previous^{commit}")"
-            sed -i "s|/compare/$previous\.\.\.|/compare/$previous_commit...|" notes.md
-          fi
           cat notes.md
 
       - name: Publish
@@ -252,3 +258,26 @@ jobs:
           fi
           gh release create "$TAG" "${args[@]}" dist/*
           echo "published: $(gh release view "$TAG" --json url --jq .url)"
+
+      # Only after this one is up, so a failed publish leaves the previous
+      # release in place. Tags are kept: they anchor `git describe` and the
+      # notes of later releases.
+      - name: Remove the releases this one replaces
+        if: needs.gate.outputs.prerelease != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          KEEP: ${{ vars.RELEASE_KEEP }}
+        run: |
+          set -euo pipefail
+          gh release list --exclude-drafts --limit 100 --json tagName --jq '.[].tagName' |
+          while read -r tag; do
+            if [ "$tag" = "$TAG" ]; then
+              continue
+            fi
+            case " $KEEP " in
+              *" $tag "*) echo "keeping $tag (RELEASE_KEEP)"; continue ;;
+            esac
+            echo "removing $tag"
+            gh release delete "$tag" --yes
+          done
