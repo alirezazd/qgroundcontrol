@@ -1,14 +1,6 @@
 > **32RavenQGC** -- the QGroundControl fork for the
 > [32Raven flight controller](https://github.com/alirezazd/32raven)
 >
-> [![Latest release](https://img.shields.io/github/v/release/alirezazd/qgroundcontrol?include_prereleases&label=32RavenQGC)](https://github.com/alirezazd/qgroundcontrol/releases/latest)
->
-> **Download.** Every release ships Windows installers (x64, ARM64), a universal macOS DMG, Linux
-> AppImages (x86_64, aarch64) and an Android APK, with `SHA256SUMS`, on the
-> [releases page](https://github.com/alirezazd/qgroundcontrol/releases). The macOS build is not
-> notarized (System Settings, Privacy & Security, Open Anyway). The APK is signed with this fork's
-> key, so each release installs over the previous one.
->
 > **Build.** `just doctor` reports what the machine is missing, `just setup` installs it, pulls
 > the submodules, configures and builds, and `just run` launches the result (under WSL it also
 > attaches the USB radio). `just --list` has the rest; [tools/README.md](tools/README.md) the
@@ -32,13 +24,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mavlink/QGroundControl/releases"><img src="https://img.shields.io/github/v/release/mavlink/QGroundControl" alt="Latest Release"></a>
-  <a href="https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md"><img src="https://img.shields.io/github/license/mavlink/QGroundControl" alt="License"></a>
-  <a href="https://github.com/mavlink/QGroundControl/actions/workflows/linux.yml"><img src="https://github.com/mavlink/QGroundControl/actions/workflows/linux.yml/badge.svg" alt="Linux Build"></a>
-  <a href="https://securityscorecards.dev/viewer/?uri=github.com/mavlink/qgroundcontrol"><img src="https://img.shields.io/ossf-scorecard/github.com/mavlink/qgroundcontrol?label=openssf%20scorecard" alt="OpenSSF Scorecard"></a>
-  <a href="https://crowdin.com/project/qgroundcontrol"><img src="https://badges.crowdin.net/qgroundcontrol/localized.svg" alt="Crowdin"></a>
-  <a href="https://discord.com/channels/1022170275984457759/1022185820683255908"><img src="https://img.shields.io/discord/1022170275984457759?logo=discord&logoColor=white&label=Discord" alt="Dronecode Discord"></a>
-  <a href="https://doi.org/10.5281/zenodo.595404"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.595404.svg" alt="DOI"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/releases/latest"><img src="https://img.shields.io/github/v/release/alirezazd/qgroundcontrol?include_prereleases&label=32RavenQGC" alt="Latest Release"></a>
+  <a href=".github/COPYING.md"><img src="https://img.shields.io/github/license/alirezazd/qgroundcontrol" alt="License"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/actions/workflows/linux.yml?query=branch%3A32Raven"><img src="https://github.com/alirezazd/qgroundcontrol/actions/workflows/linux.yml/badge.svg?branch=32Raven" alt="Linux Build"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/actions/workflows/release.yml"><img src="https://github.com/alirezazd/qgroundcontrol/actions/workflows/release.yml/badge.svg" alt="Release"></a>
 </p>
 
 **QGroundControl** (QGC) is a Ground Control Station (GCS) for UAVs, providing full flight control
@@ -57,32 +46,34 @@ and mission planning for any *MAVLink-enabled* drone, including *PX4* and *ArduP
 
 ## Download
 
-Grab the latest stable build for your platform, or see all assets on the
-[releases page](https://github.com/mavlink/QGroundControl/releases/latest):
+Grab the latest build for your platform, or see all assets on the
+[releases page](https://github.com/alirezazd/qgroundcontrol/releases/latest):
 
 <p align="center">
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl-installer.exe"><img src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" alt="Windows"></a>
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl.dmg"><img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" alt="macOS"></a>
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl-x86_64.AppImage"><img src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black" alt="Linux (AppImage)"></a>
-  <a href="https://github.com/mavlink/QGroundControl/releases/latest/download/QGroundControl.apk"><img src="https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white" alt="Android"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/releases/latest/download/32RavenQGC-installer-AMD64.exe"><img src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" alt="Windows"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/releases/latest/download/32RavenQGC-installer-ARM64.exe"><img src="https://img.shields.io/badge/Windows%20on%20ARM-0078D6?logo=windows&logoColor=white" alt="Windows on ARM"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/releases/latest/download/32RavenQGC.dmg"><img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" alt="macOS"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/releases/latest/download/32RavenQGC-x86_64.AppImage"><img src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black" alt="Linux (AppImage)"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/releases/latest/download/32RavenQGC-aarch64.AppImage"><img src="https://img.shields.io/badge/Linux%20aarch64-FCC624?logo=linux&logoColor=black" alt="Linux aarch64 (AppImage)"></a>
+  <a href="https://github.com/alirezazd/qgroundcontrol/releases/latest/download/32RavenQGC.apk"><img src="https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white" alt="Android"></a>
 </p>
+
+Every release carries `SHA256SUMS` for the assets above. The macOS build is not notarized: open it
+from System Settings, Privacy & Security, Open Anyway. The APK is signed with this fork's key, so
+each release installs over the previous one.
 
 ## Links
 
-- [Official Website](http://qgroundcontrol.com)
-- [User Manual](https://docs.qgroundcontrol.com/en/)
-- [Developer Guide](https://dev.qgroundcontrol.com/en/) / [Build Instructions](https://dev.qgroundcontrol.com/en/getting_started/)
-- [Discussion & Support](https://docs.qgroundcontrol.com/en/Support/Support.html)
-- [Dronecode Discord](https://discord.com/channels/1022170275984457759/1022185820683255908)
+- [32Raven flight controller](https://github.com/alirezazd/32raven) / [The 32Raven Handbook](https://alirezazd.github.io/32raven/)
+- [Issues](https://github.com/alirezazd/qgroundcontrol/issues)
+- [Upstream QGroundControl](https://github.com/mavlink/qgroundcontrol): [User Manual](https://docs.qgroundcontrol.com/en/), [Developer Guide](https://dev.qgroundcontrol.com/en/), [Dronecode Discord](https://discord.com/channels/1022170275984457759/1022185820683255908)
 - [Security Policy](.github/SECURITY.md)
 - [Code of Conduct](.github/CODE_OF_CONDUCT.md)
-- [License](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md)
+- [License](.github/COPYING.md)
 
 ## Contributing
 
-QGC is open source and welcomes contributions. See [AGENTS.md](AGENTS.md) for build/test/lint
-commands and coding conventions, and [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for
-architecture patterns and the contribution workflow.
-
-QGC's interface is translated by the community — help translate it into your language on
-[Crowdin](https://crowdin.com/project/qgroundcontrol).
+See [AGENTS.md](AGENTS.md) for the build, test and lint commands and the coding conventions, and
+[.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for the architecture patterns. Changes that are
+not 32Raven-specific belong upstream, in
+[mavlink/qgroundcontrol](https://github.com/mavlink/qgroundcontrol).
