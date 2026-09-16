@@ -7,6 +7,8 @@
 
 #include "MockLink.h"
 #include "ParameterManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
 #include "SensorsComponentController.h"
 #include "Vehicle.h"
 
@@ -17,18 +19,26 @@ namespace {
 struct PoseInfo {
     MockLinkPX4Calibration::Pose pose;
     const char *objectName;     ///< VehicleRotationCal objectName in SensorsSetup.qml
-    const char *rotateImage;    ///< Image shown while rotating on this side (mag cal)
-    const char *stillImage;     ///< Image shown while holding still on this side (accel cal)
+    const char *poseName;       ///< Pose part of the image name (SensorsSetup.qml _poseImage)
 };
 
 constexpr PoseInfo kPoses[MockLinkPX4Calibration::kSideCount] = {
-    { MockLinkPX4Calibration::Pose::RightSideUp, "sensorsCal_downSide",       "VehicleDownRotate.png",       "VehicleDown.png" },
-    { MockLinkPX4Calibration::Pose::UpsideDown,  "sensorsCal_upsideDownSide", "VehicleUpsideDownRotate.png", "VehicleUpsideDown.png" },
-    { MockLinkPX4Calibration::Pose::NoseDown,    "sensorsCal_noseDownSide",   "VehicleNoseDownRotate.png",   "VehicleNoseDown.png" },
-    { MockLinkPX4Calibration::Pose::TailDown,    "sensorsCal_tailDownSide",   "VehicleTailDownRotate.png",   "VehicleTailDown.png" },
-    { MockLinkPX4Calibration::Pose::Left,        "sensorsCal_leftSide",       "VehicleLeftRotate.png",       "VehicleLeft.png" },
-    { MockLinkPX4Calibration::Pose::Right,       "sensorsCal_rightSide",      "VehicleRightRotate.png",      "VehicleRight.png" },
+    { MockLinkPX4Calibration::Pose::RightSideUp, "sensorsCal_downSide",       "Down" },
+    { MockLinkPX4Calibration::Pose::UpsideDown,  "sensorsCal_upsideDownSide", "UpsideDown" },
+    { MockLinkPX4Calibration::Pose::NoseDown,    "sensorsCal_noseDownSide",   "NoseDown" },
+    { MockLinkPX4Calibration::Pose::TailDown,    "sensorsCal_tailDownSide",   "TailDown" },
+    { MockLinkPX4Calibration::Pose::Left,        "sensorsCal_leftSide",       "Left" },
+    { MockLinkPX4Calibration::Pose::Right,       "sensorsCal_rightSide",      "Right" },
 };
+
+/// The pose image SensorsSetup.qml shows: a multirotor gets its own set, anything else the generic one.
+static QString poseImage(const Vehicle *vehicle, const PoseInfo &info, bool rotating)
+{
+    return QStringLiteral("%1%2%3.png")
+        .arg(vehicle->multiRotor() ? QStringLiteral("MultiRotor") : QStringLiteral("Vehicle"),
+             QLatin1String(info.poseName),
+             rotating ? QStringLiteral("Rotate") : QString());
+}
 
 bool waitForCalState(QQuickItem *item, SensorsComponentController::SideCalState expected, int timeoutMs)
 {
@@ -105,7 +115,18 @@ void PX4SensorsCalibrationUITest::_verifySensorsSetupStates(const SensorsSetupSt
         { "vehicleConfig_section_Orientations",  "sectionSetupComplete", expected.orientationsComplete },
     };
 
+    // A core plugin whose sensors have a fixed orientation hides the Orientations
+    // section (SensorsSetup.qml gates it on the option); that button must then be
+    // absent rather than found.
+    const bool fixedOrientation = QGCCorePlugin::instance()->options()->sensorsHaveFixedOrientation();
+
     for (const ButtonCheck &check : checks) {
+        if (fixedOrientation && qstrcmp(check.objectName, "vehicleConfig_section_Orientations") == 0) {
+            QVERIFY2(!findVisibleItem(_rootItem, QLatin1String(check.objectName), 500),
+                     qPrintable(QStringLiteral("Orientations section shown despite fixed sensor orientation (%1)")
+                                    .arg(QLatin1String(context))));
+            continue;
+        }
         QQuickItem *btn = findVisibleItem(_rootItem, QLatin1String(check.objectName), 3000);
         QVERIFY2(btn, qPrintable(QStringLiteral("Button not found (%1): %2")
                                      .arg(QLatin1String(context), QLatin1String(check.objectName))));
@@ -201,7 +222,7 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
         QVERIFY2(waitForCalState(side, SensorsComponentController::SideCalStateInProgress, 5000),
                  qPrintable(QStringLiteral("Side never went in-progress: %1").arg(sideName)));
         QCOMPARE(side->property("calInProgressText").toString(), QStringLiteral("Rotate"));
-        QVERIFY2(side->property("imageSource").toString().endsWith(QLatin1String(info.rotateImage)),
+        QVERIFY2(side->property("imageSource").toString().endsWith(poseImage(vehicle, info, true)),
                  qPrintable(QStringLiteral("Wrong rotate image for %1: %2")
                                 .arg(sideName, side->property("imageSource").toString())));
 
@@ -428,7 +449,7 @@ void PX4SensorsCalibrationUITest::_testAccelCalibration()
         QVERIFY2(waitForCalState(side, SensorsComponentController::SideCalStateInProgress, 5000),
                  qPrintable(QStringLiteral("Side never went in-progress: %1").arg(sideName)));
         QCOMPARE(side->property("calInProgressText").toString(), QStringLiteral("Hold Still"));
-        QVERIFY2(side->property("imageSource").toString().endsWith(QLatin1String(info.stillImage)),
+        QVERIFY2(side->property("imageSource").toString().endsWith(poseImage(vehicle, info, false)),
                  qPrintable(QStringLiteral("Wrong hold-still image for %1: %2")
                                 .arg(sideName, side->property("imageSource").toString())));
 

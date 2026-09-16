@@ -292,9 +292,10 @@ void QGCMAVLinkTest::_testIsValidChannel()
 void QGCMAVLinkTest::_testAllFirmwareClasses()
 {
     const auto classes = QGCMAVLink::allFirmwareClasses();
-    QCOMPARE(classes.size(), 3);
+    QCOMPARE(classes.size(), 4);
     QVERIFY(classes.contains(QGCMAVLink::FirmwareClassPX4));
     QVERIFY(classes.contains(QGCMAVLink::FirmwareClassArduPilot));
+    QVERIFY(classes.contains(QGCMAVLink::FirmwareClass32Raven));
     QVERIFY(classes.contains(QGCMAVLink::FirmwareClassGeneric));
 }
 
