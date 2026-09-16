@@ -521,15 +521,23 @@ def output_github_actions(config: CcacheConfig) -> None:
     )
 
 
-def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -> str:
-    """Return the normalized cache scope used by CI."""
+def determine_cache_scope(
+    event_name: str, ref_name: str, pr_number: str = "", default_branch: str = "master"
+) -> str:
+    """Return the normalized cache scope used by CI.
+
+    Pushes to the default branch fill the ``shared`` scope every other ref
+    (branches, PRs, release tags) falls back to. The branch is the
+    repository's own rather than a fixed name so a fork whose default branch
+    is not ``master`` warms its caches the same way.
+    """
     scope = "shared"
     if event_name == "pull_request":
         scope = f"pr-{pr_number or 'unknown'}"
     elif event_name == "workflow_dispatch":
         scope = f"manual-{ref_name}"
     elif event_name == "push":
-        if ref_name != "master":
+        if ref_name != default_branch:
             scope = f"branch-{ref_name}"
     else:
         scope = f"{event_name}-{ref_name}"
@@ -713,6 +721,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     scope.add_argument("--event-name", required=True, help="GitHub event name")
     scope.add_argument("--ref-name", required=True, help="Git ref name")
     scope.add_argument("--pr-number", default="", help="Pull request number")
+    scope.add_argument("--default-branch", default="master", help="The repository's default branch")
 
     # -- windows-config ------------------------------------------------
     windows_cfg = sub.add_parser("windows-config", help="Resolve Windows ccache binary metadata")
@@ -794,7 +803,9 @@ def main(argv: list[str] | None = None) -> int:
         return run_summary()
 
     if args.command == "scope":
-        scope = determine_cache_scope(args.event_name, args.ref_name, args.pr_number)
+        scope = determine_cache_scope(
+            args.event_name, args.ref_name, args.pr_number, args.default_branch
+        )
         print(scope)
         write_github_output({"scope": scope})
         return 0

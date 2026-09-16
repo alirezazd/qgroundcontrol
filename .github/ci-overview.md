@@ -135,6 +135,7 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 | `gstreamer_archive.py` | Package GStreamer builds and optionally upload to S3 |
 | `install_dependencies_helper.py` | Post-install fixups for CI dependency caching on Linux |
 | `linux_debug_matrix.py` | Emit the `linux.yml` debug-validation matrix as a JSON `include` list |
+| `android_matrix.py` | Emit the `android.yml` build matrix: the Linux leg that ships and the emulator smoke test |
 | `mirror_gstreamer.py` | Mirror official upstream GStreamer release artifacts to the QGC S3 bucket |
 | `mold_helper.py` | Download and install a pinned, SHA256-verified `mold` linker binary (Linux) |
 | `plan_docker_builds.py` | Generate Docker workflow build matrices from changed files |
@@ -199,6 +200,12 @@ git tag v1.2.3 && git push origin v1.2.3          # release
 git tag v1.2.3-rc1 && git push origin v1.2.3-rc1  # prerelease (any `-suffix`)
 ```
 
+Push the branch first and tag it once that build is green: the platform workflows also run on
+pushes to `32Raven`, and a push to the default branch is what fills the `shared` cache scope
+(ccache, moc, CPM sources -- `ccache_helper.py scope`) that a tag build restores. A tag's own
+caches are scoped to the tag, so nothing carries from one release to the next except through the
+branch.
+
 What happens on the tag push:
 
 1. `linux.yml`, `windows.yml`, `macos.yml` and `android.yml` build the tagged commit exactly as
@@ -206,7 +213,7 @@ What happens on the tag push:
    named after `QGC_APP_NAME` (`.github/scripts/app_name.py` reads it from the custom overlay, and
    `build-setup` exports it), so a custom build ships under its own name.
 2. `release.yml` checks that `git describe --tags` at the tag *is* the tag -- that is the version
-   `cmake/modules/Git.cmake` compiles in -- then waits for the four platform runs of that commit
+   `cmake/modules/Git.cmake` compiles in -- then waits for the tag's four platform runs
    (`wait_platform_runs.py`, failing fast if any of them fails), downloads their artifacts, stages
    the installers/AppImages/DMG/APK with `SHA256SUMS`, and publishes the release with an asset
    table followed by GitHub's generated notes since the previous release. A suffixed tag becomes a

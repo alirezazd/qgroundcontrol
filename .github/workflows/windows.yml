@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - 'Stable*'
+      - 32Raven
     tags:
       - 'v*'
     paths-ignore:

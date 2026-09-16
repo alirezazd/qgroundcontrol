@@ -3,13 +3,15 @@
 
 A release tag triggers Linux, Windows, MacOS and Android as independent
 workflow runs; the release workflow needs all four green and needs their run
-ids to download what they built. This polls the Actions API for runs of the
-given commit until every named workflow has a completed run, exits non-zero
-as soon as one of them fails, and writes ``runs=<json name->id>`` to
-$GITHUB_OUTPUT.
+ids to download what they built. This polls the Actions API for the tag's
+runs of the given commit until every named workflow has a completed run,
+exits non-zero as soon as one of them fails, and writes
+``runs=<json name->id>`` to $GITHUB_OUTPUT. The commit alone does not
+identify the runs: pushing the branch and the tag together starts a second
+set on the same commit, and only the tag's set is asked for.
 
     python3 .github/scripts/wait_platform_runs.py --sha $GITHUB_SHA \\
-        --workflows Linux Windows MacOS Android
+        --ref $GITHUB_REF_NAME --workflows Linux Windows MacOS Android
 
 Requires ``gh`` with a token that can read Actions (GH_TOKEN).
 """
@@ -45,14 +47,14 @@ class Run:
     created_at: str
 
 
-def fetch_runs(repo: str, sha: str) -> list[Run]:
-    """Every push-triggered workflow run of *sha*, from the Actions API."""
+def fetch_runs(repo: str, sha: str, ref: str) -> list[Run]:
+    """Every push-triggered run of *sha* on *ref* (a tag name), from the Actions API."""
     result = subprocess.run(
         [
             "gh",
             "api",
             "--paginate",
-            f"repos/{repo}/actions/runs?head_sha={sha}&per_page=100",
+            f"repos/{repo}/actions/runs?head_sha={sha}&branch={ref}&per_page=100",
             "--jq",
             ".workflow_runs[] | {name, id, status, conclusion, created_at, event}",
         ],
@@ -133,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--repo", required=True, help="owner/name")
     parser.add_argument("--sha", required=True)
+    parser.add_argument("--ref", required=True, help="the tag whose runs to wait for")
     parser.add_argument("--workflows", nargs="+", required=True, help="workflow names to wait for")
     parser.add_argument("--timeout-minutes", type=float, default=170)
     parser.add_argument("--poll-seconds", type=float, default=120)
@@ -147,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         runs = wait(
             args.workflows,
-            lambda: fetch_runs(args.repo, args.sha),
+            lambda: fetch_runs(args.repo, args.sha, args.ref),
             timeout_s=args.timeout_minutes * 60,
             poll_s=args.poll_seconds,
             startup_grace_s=args.startup_grace_minutes * 60,

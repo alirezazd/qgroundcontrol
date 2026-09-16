@@ -76,7 +76,9 @@ jobs:
           echo "$TAG (prerelease=$prerelease)"
 
   # The tag push started the four platform workflows on its own; this job
-  # only waits for them and learns which runs to collect from.
+  # only waits for them and learns which runs to collect from. Asked for by
+  # tag, not just by commit: pushing the branch and the tag together starts
+  # a second set of runs on the same commit.
   wait-for-builds:
     name: Wait for platform builds
     needs: gate
@@ -105,13 +107,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           workflows="$(python3 "${GITHUB_WORKSPACE}/tools/setup/read_config.py" \
             --get build.platform_workflows | tr ',' ' ')"
           # shellcheck disable=SC2086  # a word list, by construction
           python3 "${GITHUB_WORKSPACE}/.github/scripts/wait_platform_runs.py" \
-            --repo "$GITHUB_REPOSITORY" --sha "$SHA" \
+            --repo "$GITHUB_REPOSITORY" --sha "$SHA" --ref "$TAG" \
             --workflows $workflows \
             --timeout-minutes 170 --poll-seconds 120
 

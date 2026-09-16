@@ -254,6 +254,16 @@ class TestCacheScope:
     def test_push_non_master_scope(self):
         assert determine_cache_scope("push", "feature/test") == "branch-feature-test"
 
+    def test_push_default_branch_is_shared(self):
+        assert determine_cache_scope("push", "master") == "shared"
+        assert determine_cache_scope("push", "32Raven", default_branch="32Raven") == "shared"
+
+    def test_push_master_is_a_branch_when_not_default(self):
+        assert determine_cache_scope("push", "master", default_branch="32Raven") == "branch-master"
+
+    def test_release_tag_is_its_own_scope(self):
+        assert determine_cache_scope("push", "v1.0.0", default_branch="32Raven") == "branch-v1.0.0"
+
 
 class TestWindowsConfig:
     """Tests for Windows ccache binary resolution."""

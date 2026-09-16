@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - 'Stable*'
+      - 32Raven
     tags:
       - 'v*'
     paths-ignore:
@@ -36,8 +37,8 @@ jobs:
     with:
       platform: android
 
-  # The windows leg is the PR long pole by a decent amount; android_matrix.py drops it
-  # for pull requests and keeps it for push / merge queue / dispatch.
+  # Two legs, both Linux-hosted: android_matrix.py says which builds ship and
+  # which one only smoke-tests on the emulator.
   build-matrix:
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
@@ -60,8 +61,6 @@ jobs:
           persist-credentials: false
       - name: Build matrix
         id: build
-        env:
-          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
         run: python3 .github/scripts/android_matrix.py
 
   build:
