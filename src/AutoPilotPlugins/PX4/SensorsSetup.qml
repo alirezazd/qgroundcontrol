@@ -155,8 +155,11 @@ Item {
 
         QGCSimpleMessageDialog {
             title:      qsTr("Calibration Cancel")
-            text:       qsTr("Waiting for Vehicle to response to Cancel. This may take a few seconds.")
-            buttons:    0
+            text:       qsTr("Waiting for the vehicle to confirm the cancel. This may take a few seconds. Close stops waiting and resets this page; a vehicle that is still calibrating finishes or times out on its own.")
+            buttons:    Dialog.Close
+
+            // Closing by hand or by the controller both land here; the controller ignores the second
+            closeFunction: function() { controller.stopWaitingForCancel() }
 
             Connections {
                 target: controller
@@ -469,6 +472,7 @@ Item {
 
             TextArea {
                 id:             statusTextArea
+                objectName:     "sensorsSetup_statusLog"
                 anchors.fill:   parent
                 readOnly:       true
                 visible:        !orientationCalArea.visible

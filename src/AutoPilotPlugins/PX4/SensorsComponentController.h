@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QTimer>
 #include <QtQuick/QQuickItem>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -56,6 +57,7 @@ public:
     Q_INVOKABLE void calibrateLevel(void);
     Q_INVOKABLE void calibrateAirspeed(void);
     Q_INVOKABLE void cancelCalibration(void);
+    Q_INVOKABLE void stopWaitingForCancel(void);
     Q_INVOKABLE bool usingUDPLink(void);
     Q_INVOKABLE void resetFactoryParameters();
     Q_INVOKABLE void resetSidesToIdle(void);
@@ -75,6 +77,9 @@ signals:
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text, const QString &description);
     void _handleParametersReset(bool success);
+    void _handleCommunicationLost(bool communicationLost);
+    void _handleMavCommandResult(int vehicleId, int targetComponent, int command, int ackResult, int failureCode);
+    void _handleCancelTimeout(void);
 
 private:
     void _startLogCalibration(void);
@@ -87,9 +92,11 @@ private:
     enum StopCalibrationCode {
         StopCalibrationSuccess,
         StopCalibrationFailed,
-        StopCalibrationCancelled
+        StopCalibrationCancelled,
+        StopCalibrationInterrupted  ///< The vehicle's report is not coming; the reason is already in the status log
     };
     void _stopCalibration(StopCalibrationCode code);
+    void _interruptCalibration(const QString& reason);
 
     void _updateAndEmitShowOrientationCalArea(bool show);
 
@@ -122,6 +129,8 @@ private:
 
     bool _unknownFirmwareVersion;
     bool _waitingForCancel;
+    QTimer _cancelTimer;
 
     static const int _supportedFirmwareCalVersion = 2;
+    static constexpr int _cancelTimeoutMs = 10000;
 };

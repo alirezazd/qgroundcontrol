@@ -33,6 +33,14 @@ SensorsComponentController::SensorsComponentController(void)
 {
     connect(_vehicle, &Vehicle::sensorsParametersResetAck, this, &SensorsComponentController::_handleParametersReset);
 
+    // The page leaves a calibration only on the vehicle's word ("[cal] calibration done",
+    // "failed" or "cancelled"), so it has to notice when that word cannot come.
+    connect(_vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &SensorsComponentController::_handleCommunicationLost);
+    connect(_vehicle, &Vehicle::mavCommandResult, this, &SensorsComponentController::_handleMavCommandResult);
+
+    _cancelTimer.setSingleShot(true);
+    _cancelTimer.setInterval(_cancelTimeoutMs);
+    connect(&_cancelTimer, &QTimer::timeout, this, &SensorsComponentController::_handleCancelTimeout);
 }
 
 bool SensorsComponentController::usingUDPLink(void)
@@ -113,6 +121,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
         _progressBar->setProperty("value", 0);
     }
 
+    _cancelTimer.stop();
     _waitingForCancel = false;
     emit waitingForCancelChanged();
 
@@ -131,6 +140,11 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
 
         case StopCalibrationCancelled:
             emit resetStatusTextArea();
+            _hideAllCalAreas();
+            break;
+
+        case StopCalibrationInterrupted:
+            // The log keeps the reason; nothing else is coming from the vehicle
             _hideAllCalAreas();
             break;
 
@@ -395,11 +409,65 @@ void SensorsComponentController::_hideAllCalAreas(void)
 
 void SensorsComponentController::cancelCalibration(void)
 {
-    // The firmware doesn't allow us to cancel calibration. The best we can do is wait
-    // for it to timeout.
+    // The command is acknowledged when it arrives; the run itself reports "calibration
+    // cancelled" when it gets there. That report is what ends the wait, and the wait is
+    // bounded: a vehicle that rejects the command, does not answer, or has rebooted and
+    // has nothing to cancel would otherwise hold the page forever.
     _waitingForCancel = true;
     emit waitingForCancelChanged();
+    _cancelTimer.start();
     _vehicle->stopCalibration(true /* showError */);
+}
+
+void SensorsComponentController::stopWaitingForCancel(void)
+{
+    if (!_waitingForCancel) {
+        return;
+    }
+    _interruptCalibration(tr("Stopped waiting for the vehicle. If it is still calibrating, it will finish or time out on its own."));
+}
+
+/// Ends the calibration on this side when the vehicle's own report is not coming. The reason
+/// goes to the status log and to an app message: once the page is idle again the log is
+/// hidden behind the orientation preview on most sections.
+void SensorsComponentController::_interruptCalibration(const QString& reason)
+{
+    _appendStatusLog(reason);
+    qCDebug(SensorsComponentControllerLog) << reason;
+    QGC::showAppMessage(reason);
+    _stopCalibration(StopCalibrationInterrupted);
+}
+
+void SensorsComponentController::_handleCommunicationLost(bool communicationLost)
+{
+    if (!communicationLost || !(calibrationActive() || _waitingForCancel)) {
+        return;
+    }
+    _interruptCalibration(tr("Calibration interrupted: connection to the vehicle was lost."));
+}
+
+void SensorsComponentController::_handleMavCommandResult(int vehicleId, int targetComponent, int command, int ackResult, int failureCode)
+{
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(targetComponent);
+
+    if (!_waitingForCancel || command != MAV_CMD_PREFLIGHT_CALIBRATION) {
+        return;
+    }
+    // A duplicate means the start is still awaiting its own ack: keep waiting, the timeout covers it
+    if (failureCode == VehicleTypes::MavCmdResultFailureNoResponseToCommand) {
+        _interruptCalibration(tr("Calibration interrupted: the vehicle did not respond to the cancel."));
+    } else if (failureCode == VehicleTypes::MavCmdResultCommandResultOnly && ackResult != MAV_RESULT_ACCEPTED && ackResult != MAV_RESULT_IN_PROGRESS) {
+        _interruptCalibration(tr("Calibration interrupted: the vehicle rejected the cancel."));
+    }
+}
+
+void SensorsComponentController::_handleCancelTimeout(void)
+{
+    if (!_waitingForCancel) {
+        return;
+    }
+    _interruptCalibration(tr("The vehicle did not confirm the cancel. If it is still calibrating, it will finish or time out on its own."));
 }
 
 void SensorsComponentController::_handleParametersReset(bool success)

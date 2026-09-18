@@ -11,6 +11,7 @@
 #include "QGCOptions.h"
 #include "SensorsComponentController.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 UT_REGISTER_TEST(PX4SensorsCalibrationUITest, TestLabel::Integration)
 
@@ -54,6 +55,25 @@ const char *calStateName(int state)
     case SensorsComponentController::SideCalStateCompleted:  return "Completed";
     }
     return "Unknown";
+}
+
+/// The status log is hidden behind the orientation preview once the page is idle, so it is
+/// looked up regardless of visibility.
+QQuickItem *findItemAnyVisibility(QQuickItem *root, const QString &objectName)
+{
+    if (!root) {
+        return nullptr;
+    }
+    if (root->objectName() == objectName) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (QQuickItem *child : children) {
+        if (QQuickItem *found = findItemAnyVisibility(child, objectName)) {
+            return found;
+        }
+    }
+    return nullptr;
 }
 
 } // namespace
@@ -380,6 +400,90 @@ void PX4SensorsCalibrationUITest::_testMagCalibrationCancel()
 {
     _runCalibrationCancelTest(QStringLiteral("vehicleConfig_section_Compass"),
                               QStringLiteral("sensorsSetup_calibrateCompass"));
+}
+
+void PX4SensorsCalibrationUITest::_runCalibrationLinkLostTest(bool cancelToo)
+{
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+    resetParamsToFirmwareDefaults(vehicle, QStringLiteral("CAL_MAG0_ID"));
+    if (QTest::currentTestFailed()) return;
+
+    _navigateToSensorsPanel();
+    if (QTest::currentTestFailed()) return;
+
+    clickSidebarButton(QStringLiteral("vehicleConfig_section_Compass"));
+    if (QTest::currentTestFailed()) return;
+
+    _startCalibration(QStringLiteral("sensorsSetup_calibrateCompass"));
+    if (QTest::currentTestFailed()) return;
+
+    const PoseInfo &info = kPoses[0];
+    QQuickItem *side = findVisibleItem(_rootItem, QLatin1String(info.objectName), 5000);
+    QVERIFY2(side, "Pose indicator not visible after calibration start");
+
+    mockLink->setCalibrationPose(info.pose);
+    QVERIFY2(waitForCalState(side, SensorsComponentController::SideCalStateInProgress, 5000),
+             "Side never went in-progress");
+
+    QQuickItem *cancelButton = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_cancelCalibration"));
+    QVERIFY2(cancelButton, "Cancel button not visible during calibration");
+
+    // The vehicle goes silent mid-calibration: no "[cal] calibration cancelled", no
+    // "done", no "failed" will ever arrive. Everything else in flight gives up too:
+    // requests retry out, the cancel goes unanswered, the parameter refresh that
+    // follows the stop has no link to go out on.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Giving up sending command after max retries")));
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Vehicle did not respond to command")));
+    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("No active link available")));
+    // The page says why it gave up
+    expectAppMessage(QRegularExpression(QStringLiteral("Calibration interrupted")));
+    mockLink->setCommLost(true);
+    if (cancelToo) {
+        QVERIFY2(clickButton(QStringLiteral("sensorsSetup_cancelCalibration")), "Failed to click Cancel");
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("popupDialog_rejectButton"), 3000),
+                 "Cancel wait dialog not shown");
+    }
+
+    // The page notices on its own: the calibration-active UI hides (and the wait
+    // dialog with it) once the link is declared lost or the cancel goes unanswered
+    const int giveUpMs = VehicleLinkManager::kTestCommLostDetectionTimeoutMs + 10000;
+    QVERIFY2(QTest::qWaitFor([&] { return !cancelButton->isVisible(); }, giveUpMs),
+             "Calibration still active after the vehicle went silent");
+    QVERIFY2(QTest::qWaitFor([&] { return !findVisibleItem(_rootItem, QStringLiteral("popupDialog_rejectButton"), 0); }, 3000),
+             "Cancel wait dialog still open after the calibration was interrupted");
+
+    verifyExpectedLogMessage();
+    if (QTest::currentTestFailed()) return;
+
+    // Results are discarded and the reason is kept in the status log as well
+    QVERIFY2(waitForCalState(side, SensorsComponentController::SideCalStateIdle, 5000),
+             "Side not Idle after the calibration was interrupted");
+    QQuickItem *statusLog = findItemAnyVisibility(_rootItem, QStringLiteral("sensorsSetup_statusLog"));
+    QVERIFY2(statusLog, "Status log not found");
+    const QString logText = statusLog->property("text").toString();
+    QVERIFY2(logText.contains(QStringLiteral("Calibration interrupted")),
+             qPrintable(QStringLiteral("Status log does not say why the calibration ended: %1").arg(logText)));
+
+    // Navigation is no longer blocked by a calibration that is not running
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000),
+             "Calibrate button not available after the calibration was interrupted");
+
+    });
+}
+
+void PX4SensorsCalibrationUITest::_testMagCalibrationLinkLost()
+{
+    _runCalibrationLinkLostTest(false /* cancelToo */);
+}
+
+void PX4SensorsCalibrationUITest::_testMagCalibrationCancelUnanswered()
+{
+    _runCalibrationLinkLostTest(true /* cancelToo */);
 }
 
 void PX4SensorsCalibrationUITest::_testAccelCalibration()

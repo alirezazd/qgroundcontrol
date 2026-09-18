@@ -21,6 +21,8 @@ public:
 private slots:
     void _testMagCalibration();
     void _testMagCalibrationCancel();
+    void _testMagCalibrationLinkLost();
+    void _testMagCalibrationCancelUnanswered();
     void _testAccelCalibration();
     void _testAccelCalibrationCancel();
 
@@ -53,4 +55,9 @@ private:
     /// given calibration, put one side in progress, cancel and verify the UI
     /// returns to the idle state.
     void _runCalibrationCancelTest(const QString &sectionObjectName, const QString &calibrateButtonObjectName);
+
+    /// Starts a compass calibration, drives one side in progress and then cuts the link; when
+    /// cancelToo is set, Cancel is pressed on the dead link as well. Either way the page must
+    /// leave the calibration on its own with the reason in the status log.
+    void _runCalibrationLinkLostTest(bool cancelToo);
 };
